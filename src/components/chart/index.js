@@ -1,4 +1,6 @@
 import React, { useEffect, useRef } from "react";
+import _ from 'lodash';
+import { Row, Col, Button } from "antd";
 import { getOpacity } from "../../globals";
 import mall from "../../static/mall.png";
 
@@ -7,165 +9,187 @@ const duration = 5;
 
 export const FlowChart = ({ info, width, height, xcount, ycount }) => {
   console.log(info);
-  const canvasRef = useRef();
-
-  const clearCanvas = () => {
-    const ctx = canvasRef.current.getContext("2d");
-    ctx.fillStyle = "white";
-    ctx.fill();
-    ctx.fillRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+  //declare for drawing canvas
+  const margins = { left: 30, right: 30, bottom: 30, top: 30 };
+  const drawSz = {
+    w: width - margins.left - margins.right,
+    h: height - margins.top - margins.bottom
+  };
+  const ratio = {
+    x: drawSz.w / info.axisw,
+    y: drawSz.h / info.axish
   };
 
-  useEffect(() => {
-    clearCanvas();
-    const margins = { left: 30, right: 30, bottom: 30, top: 30 };
-    const drawSz = {
-      w: width - margins.left - margins.right,
-      h: height - margins.top - margins.bottom
-    };
-    const ratio = {
-      x: drawSz.w / info.axisw,
-      y: drawSz.h / info.axish
-    };
+  const xStep = drawSz.w / xcount,
+    yStep = drawSz.h / ycount,
+    vxStep = info.axisw / xcount,
+    vyStep = info.axish / ycount;
+  //-------------------------
+  const canvasRef = useRef();
+  const timesRef = useRef(0);
+  const durationIntervalRef = useRef(null);
+  const frameIntervalRef = useRef(null);
 
-    const xStep = drawSz.w / xcount,
-      yStep = drawSz.h / ycount,
-      vxStep = info.axisw / xcount,
-      vyStep = info.axish / ycount;
+  //canvas functions
+  const drawHeatmap = (ctx, data) => {
+    for (let i = 0; i < data.length; i++) {
+      ctx.fillStyle = `rgba(200, 0, 0, ${getOpacity(data[i].id_counts)})`;
+      ctx.fillRect(
+        data[i].xi * xStep + 2,
+        data[i].yi * yStep + 2,
+        xStep - 4,
+        yStep - 4
+      );
+    }
+  };
+  const clearEachCell = (ctx, opacity = 0.01) => {
+    ctx.fillStyle = `rgba(255, 255, 255, ${opacity})`;
+    ctx.fillRect(0, 0, width, height);
+  };
+  const drawAxis = ctx => {
+    ctx.beginPath();
+    ctx.strokeStyle = "rgba(0,0,0,1)";
+    ctx.fillStyle = "grey";
+    ctx.textAlign = "center";
 
-    const drawHeatmap = (ctx, data) => {
-      for (let i = 0; i < xcount; i++) {
-        for (let j = 0; j < ycount; j++) {
-          let counts = data[i * (xcount - 1) + j].id_counts;
-          if (counts > 0) {
-            ctx.fillStyle = `rgba(200, 0, 0, ${getOpacity(counts)})`;
-          } else {
-            ctx.fillStyle = "rgba(255, 255, 255, 0.01)";
-          }
-          ctx.fillRect(i * xStep + 2, j * yStep + 2, xStep - 4, yStep - 4);
-        }
+    for (let i = 0; i < xcount + 1; i++) {
+      ctx.moveTo(i * xStep, 0);
+      ctx.lineTo(i * xStep, drawSz.h);
+      ctx.fillText(i * vxStep, i * xStep, -4);
+    }
+    for (let j = 0; j < ycount + 1; j++) {
+      ctx.moveTo(0, j * yStep);
+      ctx.lineTo(drawSz.w, j * yStep);
+      if (j !== 0) ctx.fillText(j * vyStep, -10, j * yStep + 4);
+    }
+    ctx.stroke();
+  };
+  const updatePosition = data => {
+    for (let j = 0; j < data.length; j++) {
+      for (let k = 0; k < data[j].shows.length; k++) {
+        data[j].shows[k].from.x += data[j].shows[k].step.x;
+        data[j].shows[k].from.y += data[j].shows[k].step.y;
       }
-    };
+    }
+  };
+  const updateTrailPerFrame = (ctx, data) => {
+    clearEachCell(ctx);
+    drawHeatmap(ctx, data);
+    updatePosition(data);
+    drawAxis(ctx);
 
-    const clearEachCell = (ctx, opacity = 0.01) => {
-      ctx.fillStyle = `rgba(255, 255, 255, ${opacity})`;
-      for (let i = 0; i < xcount; i++) {
-        for (let j = 0; j < ycount; j++) {
-          ctx.fillRect(i * xStep + 2, j * yStep + 2, xStep - 4, yStep - 4);
-        }
+    ctx.fillStyle = "#0000ff";
+    for (let j = 0; j < data.length; j++) {
+      for (let k = 0; k < data[j].shows.length; k++) {
+        ctx.fillRect(
+          data[j].shows[k].from.x - 1.5,
+          data[j].shows[k].from.y - 1.5,
+          3,
+          3
+        );
       }
-    };
+    }
+  };
+  const updateTrailPerDuration = (ctx, dataDuration) => {      
+    let new_data = _.cloneDeep(dataDuration);
+    console.log(new_data, 'dataDuration')
+    
+    for (let j = 0; j < new_data.length; j++) {
+      for (let k = 0; k < new_data[j].shows.length; k++) {
+        new_data[j].shows[k].from.x = ratio.x * new_data[j].shows[k].from.x;
+        new_data[j].shows[k].from.y = ratio.y * new_data[j].shows[k].from.y;
+        new_data[j].shows[k].to.x = ratio.x * new_data[j].shows[k].to.x;
+        new_data[j].shows[k].to.y = ratio.y * new_data[j].shows[k].to.y;
+        new_data[j].shows[k].step = {
+          x:
+            (new_data[j].shows[k].to.x - new_data[j].shows[k].from.x) /
+            (duration * FPS),
+          y:
+            (new_data[j].shows[k].to.y - new_data[j].shows[k].from.y) /
+            (duration * FPS)
+        };
+      }
+    }
 
-    const drawAxis = ctx => {
-      ctx.beginPath();
-      ctx.strokeStyle = "rgba(0,0,0,0.3)";
-      ctx.fillStyle = "grey";
-      ctx.textAlign = "center";
+    let overed = 0;
+    updateTrailPerFrame(ctx, new_data);
+    frameIntervalRef.current = setInterval(() => {
+      if (overed / FPS > duration) {
+        clearInterval(frameIntervalRef.current);
+      }
 
-      for (let i = 0; i < xcount + 1; i++) {
-        ctx.moveTo(i * xStep, 0);
-        ctx.lineTo(i * xStep, drawSz.h);
-        ctx.fillText(i * vxStep, i * xStep, -4);
-      }
-      for (let j = 0; j < ycount + 1; j++) {
-        ctx.moveTo(0, j * yStep);
-        ctx.lineTo(drawSz.w, j * yStep);
-        if (j !== 0) ctx.fillText(j * vyStep, -10, j * yStep + 4);
-      }
-      ctx.stroke();
-    };
-    const drawTrail = data => {
-      console.log(data, "dd");
-      let times = 0;
-      const ctx = canvasRef.current.getContext("2d");
-      ctx.translate(margins.left, margins.top);
+      updateTrailPerFrame(ctx, new_data);
+      overed++;
+    }, 1000 / FPS);
+  };
+  const drawTrail = data => {
+    const ctx = canvasRef.current.getContext("2d");
+    updateTrailPerDuration(ctx, data[timesRef.current]);
+    durationIntervalRef.current = setInterval(() => {
+      clearEachCell(ctx, 1);
       drawAxis(ctx);
-
-      const updatePosition = data => {
-        for (let j = 0; j < data.counts_arr.length; j++) {
-          data.counts_arr[j].from.x += data.counts_arr[j].step.x;
-          data.counts_arr[j].from.y += data.counts_arr[j].step.y;
+      if (timesRef.current >= data.length - 1) {
+        clearInterval(durationIntervalRef.current);
+      } else {
+        timesRef.current++;
+        if (data[timesRef.current].length > 0) {
+          updateTrailPerDuration(ctx, data[timesRef.current]);
         }
-      };
-      const updateTrailPerFrame = dataPerDuration => {
-        updatePosition(dataPerDuration);
-        drawHeatmap(ctx, dataPerDuration.cell_info);
-        clearEachCell(ctx);
+      }
+    }, duration * 1000);
+  };
+  //----------------
+  const initSettings = () => {
+    timesRef.current = 0;
+    clearInterval(durationIntervalRef.current);
+    clearInterval(frameIntervalRef.current);
+  };
+  useEffect(() => {
+    const ctx = canvasRef.current.getContext("2d");
+    ctx.translate(margins.left, margins.top);
+    initSettings();
+  }, []);
 
-        ctx.fillStyle = "#0000ff";
-        for (let j = 0; j < dataPerDuration.counts_arr.length; j++) {
-          ctx.fillRect(
-            dataPerDuration.counts_arr[j].from.x - 1.5,
-            dataPerDuration.counts_arr[j].from.y - 1.5,
-            3,
-            3
-          );
-        }
-      };
-      const updateTrailPerDuration = dataPerDuration => {
-        for (let j = 0; j < dataPerDuration.counts_arr.length; j++) {
-          dataPerDuration.counts_arr[j].from.x =
-            ratio.x * dataPerDuration.counts_arr[j].from.x;
-          dataPerDuration.counts_arr[j].from.y =
-            ratio.y * dataPerDuration.counts_arr[j].from.y;
-          dataPerDuration.counts_arr[j].to.x =
-            ratio.x * dataPerDuration.counts_arr[j].to.x;
-          dataPerDuration.counts_arr[j].to.y =
-            ratio.y * dataPerDuration.counts_arr[j].to.y;
-          dataPerDuration.counts_arr[j].step = {
-            x:
-              (dataPerDuration.counts_arr[j].to.x -
-                dataPerDuration.counts_arr[j].from.x) /
-              (duration * FPS),
-            y:
-              (dataPerDuration.counts_arr[j].to.y -
-                dataPerDuration.counts_arr[j].from.y) /
-              (duration * FPS)
-          };
-        }
+  useEffect(() => {
+    initSettings();
+  }, [info, xcount, ycount]);
+  const onStart = e => {
+    e.preventDefault();
+    initSettings();
+    drawTrail(info.dt);
+  };
 
-        clearEachCell(ctx, 1);
-
-        let overed = 0;
-        updateTrailPerFrame(dataPerDuration);
-        const timeInterval = setInterval(() => {
-          if (overed / FPS > duration) {
-            clearInterval(timeInterval);
-          }
-          updateTrailPerFrame(dataPerDuration);
-          overed++;
-        }, 1000 / FPS);
-      };
-      updateTrailPerDuration(data[times]);
-      const totalInterval = setInterval(() => {
-        if (times >= data.length - 1) {
-          clearInterval(totalInterval);
-        } else {
-          times++;
-          if (data[times].counts_arr) {
-            updateTrailPerDuration(data[times]);
-          }
-        }
-      }, duration * 1000);
-    };
-    drawTrail(info.arranged);
-  }, [info, width, height, xcount, ycount]);
+  const onPause = e => {};
 
   return (
-    <div className="chartArea" style={{ width: width, height: height }}>
-      <div>
+    <div>
+      <Row>
+        <Col style={{ padding: 4, display: "flex", alignItems: "center" }}>
+          <Button onClick={onStart} style={{ margin: 8 }}>
+            Start!
+          </Button>
+          <Button onClick={onPause} style={{ margin: 8 }}>
+            Playing
+          </Button>
+          {/* pause ? "Paused" : "Playing"} */}
+        </Col>
+      </Row>
+      <div
+        className="chartArea"
+        style={{ width: width, height: height, backgroundColor: "white" }}
+      >
         <canvas
           width={width}
           height={height}
           ref={canvasRef}
-          style={{ position: "absolute", zIndex: 0 }}
+          style={{ position: "fixed", zIndex: 0 }}
         />
         <img
           src={mall}
           width={width}
           height={height}
           alt=""
-          style={{ padding: 30, zIndex: 1, position: "absolute", opacity: 0.4 }}
+          style={{ padding: 30, zIndex: 1, position: "fixed", opacity: 0.4 }}
         />
       </div>
     </div>

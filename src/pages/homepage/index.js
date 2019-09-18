@@ -1,46 +1,53 @@
-import React, {memo, useRef, useState} from 'react';
-import { CSVReader } from 'react-papaparse';
-import { Layout, Button, Row, Col, InputNumber, Slider} from 'antd';
-import { ClipLoader } from 'react-spinners';
+import React, { useRef, useState } from "react";
+import { CSVReader } from "react-papaparse";
+import { Layout, Button, Row, Col, InputNumber, Slider } from "antd";
+import { ClipLoader } from "react-spinners";
 
-import {formatData} from '../../globals';
-import {FlowChart} from '../../components/chart';
-import './index.css';
+import { formatData, adjustData } from "../../globals";
+import { FlowChart } from "../../components/chart";
+import "./index.css";
 
 const { Header, Content, Footer } = Layout;
 
-const xcount = 5, ycount = 4, period = 60, threshold = 20;
+const xcount = 5,
+  ycount = 4;
 
 const App = () => {
-  
   const fileInputRef = useRef();
-  const periodRef = useRef(period);
-  const thresholdRef = useRef(threshold);
 
-  const [isLoading, setIsLoading] = useState(false);
-  const dataRef = useRef(null);
+  const [isLoading, setIsLoading] = useState(false);  
+  const [period, setPeriod] = useState(60);
+  const [threshold, setThreshold] = useState(20);
+
+  const fdataRef = useRef(null);
+  const adataRef = useRef(null);
 
   const handleReadCSV = inputedData => {    
-    dataRef.current = formatData(inputedData.data, periodRef.current, xcount, ycount);
-    setIsLoading(false);
-  }
+    fdataRef.current = formatData(inputedData.data);
+    console.log(fdataRef.current, 'from fileload')
+    adjustData(fdataRef.current, period, threshold, xcount, ycount, res => {        
+        adataRef.current = res;
+        setIsLoading(false);
+    });
+
+  };
 
   const handleOnError = (err, file, inputElem, reason) => {
     console.log(err);
-  }
+  };
 
-  const handleImportOffer = () => {
+  const onImportOffer = () => {
     setIsLoading(true);
     fileInputRef.current.click();
-  }
+  };
 
-  const onChangePeriod = value => {    
-    periodRef.current = value;
-  }
+  const onChangePeriod = value => {
+    setPeriod(value);    
+  };
 
   const onChangeThreshold = value => {
-    thresholdRef.current = value;
-  }
+    setThreshold(value);    
+  };
 
   return (
     <Layout className="layout">
@@ -48,56 +55,83 @@ const App = () => {
         <span>People flowing chart</span>
       </Header>
       <Layout>
-        <Content style={{padding: 32, display: 'flex', flexDirection: 'column'}}>
+        <Content
+          style={{ padding: 32, display: "flex", flexDirection: "column" }}
+        >
           <CSVReader
             onFileLoaded={handleReadCSV}
             inputRef={fileInputRef}
-            style={{display: 'none'}}
+            style={{ display: "none" }}
             onError={handleOnError}
-            configOptions={{              
+            configOptions={{
               fastMode: true,
-              skipEmptyLines: true,
+              skipEmptyLines: true
             }}
           />
-          <Row>
+          <Row style={{width: '100%', padding: 8}}>
             <Col span={2}>
-              <Button onClick={handleImportOffer}>Import</Button>              
+              <Button onClick={onImportOffer}>Import CSV</Button>
             </Col>
-            <Col span={4}>
-              <InputNumber defaultValue={period} onChange={value => onChangePeriod(value)} />
-              <span>{" "}Minutes</span>
-            </Col>
-          </Row>
-          {dataRef.current &&
-            <Row>
-              <Slider
-                min={1}
-                max={20}
-                onChange={onChangeThreshold}
-                defaultValue={20}
-                // value={typeof inputValue === 'number' ? inputValue : 0}
+            <Col span={3} style={{display:'flex', justifyContent:'center', alignItems:'center'}}>
+              <InputNumber
+                min={20}
+                max={360}
+                style={{ margin: '0 8px' }}
+                value={period}
+                onChange={onChangePeriod}
               />
-            </Row>
-          }
-          {dataRef.current &&
+              mins
+            </Col>
+            <Col span={3} style={{display:'flex', justifyContent:'center', alignItems:'center'}}>
+              <InputNumber
+                min={1}
+                max={300}
+                style={{ margin: '0 8px' }}
+                value={threshold}
+                onChange={onChangeThreshold}
+              />
+              dots
+            </Col> 
+          </Row> 
+          {adataRef.current &&
             <Row>
-              <Col style={{padding: 24, margin: 12, display:'flex', justifyContent:'center', border: '1px solid #33aa00'}}>
-                <FlowChart info={dataRef.current} width={1000} height={600} xcount={xcount} ycount={ycount}/>
+              <Col
+                style={{
+                  padding: 16,
+                  margin: 4,
+                  display: "flex",
+                  justifyContent: "center",
+                  border: "1px solid #33aa00"
+                }}
+              >
+                <FlowChart
+                  info={adataRef.current}
+                  width={1000}
+                  height={600}
+                  xcount={xcount}
+                  ycount={ycount}
+                />
               </Col>
             </Row>
           }
-          {isLoading && 
+          {isLoading && (
             <Row>
-              <Col style={{padding: 16, display:'flex', justifyContent:'center'}}>
-                <ClipLoader sizeUnit={"px"} size={50} color={'#ff0090'} />
+              <Col
+                style={{
+                  padding: 16,
+                  display: "flex",
+                  justifyContent: "center"
+                }}
+              >
+                <ClipLoader sizeUnit={"px"} size={50} color={"#ff0090"} />
               </Col>
             </Row>
-          }
-        </Content>        
+          )}
+        </Content>
       </Layout>
       <Footer className="footer-description">PFC ©2019</Footer>
-  </Layout>
+    </Layout>
   );
-}
+};
 
-export default memo(App);
+export default App;
