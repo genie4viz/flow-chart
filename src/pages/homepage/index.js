@@ -17,19 +17,18 @@ const App = () => {
 
   const [isLoading, setIsLoading] = useState(false);  
   const [period, setPeriod] = useState(60);
-  const [threshold, setThreshold] = useState(20);
+  const [isSetting, setIsSetting] = useState(false);
+  const [threshold, setThreshold] = useState(20);  
 
   const fdataRef = useRef(null);
   const adataRef = useRef(null);
 
   const handleReadCSV = inputedData => {    
-    fdataRef.current = formatData(inputedData.data);
-    console.log(fdataRef.current, 'from fileload')
+    fdataRef.current = formatData(inputedData.data);    
     adjustData(fdataRef.current, period, threshold, xcount, ycount, res => {        
         adataRef.current = res;
         setIsLoading(false);
     });
-
   };
 
   const handleOnError = (err, file, inputElem, reason) => {
@@ -42,12 +41,23 @@ const App = () => {
   };
 
   const onChangePeriod = value => {
-    setPeriod(value);    
+    setPeriod(value);
   };
 
   const onChangeThreshold = value => {
-    setThreshold(value);    
+    setThreshold(value);
   };
+
+  const onSet = e => {    
+    e.preventDefault();
+    setIsSetting(true);
+    adjustData(fdataRef.current, period, threshold, xcount, ycount, res => {
+      setTimeout(() => {
+        adataRef.current = res;        
+        setIsSetting(false);
+      }, 500);
+    });
+  }
 
   return (
     <Layout className="layout">
@@ -91,7 +101,10 @@ const App = () => {
                 onChange={onChangeThreshold}
               />
               dots
-            </Col> 
+            </Col>
+            <Col span={2}>
+              <Button loading={isSetting} onClick={onSet}>Set</Button>
+            </Col>
           </Row> 
           {adataRef.current &&
             <Row>

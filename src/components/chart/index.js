@@ -8,7 +8,7 @@ const FPS = 60;
 const duration = 5;
 
 export const FlowChart = ({ info, width, height, xcount, ycount }) => {
-  console.log(info);
+  console.log(info, 'chart');
   //declare for drawing canvas
   const margins = { left: 30, right: 30, bottom: 30, top: 30 };
   const drawSz = {
@@ -91,8 +91,7 @@ export const FlowChart = ({ info, width, height, xcount, ycount }) => {
     }
   };
   const updateTrailPerDuration = (ctx, dataDuration) => {      
-    let new_data = _.cloneDeep(dataDuration);
-    console.log(new_data, 'dataDuration')
+    let new_data = _.cloneDeep(dataDuration);    
     
     for (let j = 0; j < new_data.length; j++) {
       for (let k = 0; k < new_data[j].shows.length; k++) {
