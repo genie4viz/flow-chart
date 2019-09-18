@@ -63,6 +63,7 @@ export function adjustData(data, period, threshold, xcount, ycount, cbFunc) {
     dt: partials,
     dateFrom: baseFrom,
     dateTo: baseFrom + times * periodMS, //baseTo
+    totalTimes: times,
     axisw: data.axisw,
     axish: data.axish
   });

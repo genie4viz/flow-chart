@@ -1,6 +1,7 @@
-import React, { useEffect, useRef } from "react";
-import _ from 'lodash';
+import React, { useEffect, useRef, useState } from "react";
+import _ from "lodash";
 import { Row, Col, Button } from "antd";
+import {Slider} from './slider';
 import { getOpacity } from "../../globals";
 import mall from "../../static/mall.png";
 
@@ -8,7 +9,7 @@ const FPS = 60;
 const duration = 5;
 
 export const FlowChart = ({ info, width, height, xcount, ycount }) => {
-  console.log(info, 'chart');
+  console.log(info, "chart");
   //declare for drawing canvas
   const margins = { left: 30, right: 30, bottom: 30, top: 30 };
   const drawSz = {
@@ -25,10 +26,13 @@ export const FlowChart = ({ info, width, height, xcount, ycount }) => {
     vxStep = info.axisw / xcount,
     vyStep = info.axish / ycount;
   //-------------------------
-  const canvasRef = useRef();
-  const timesRef = useRef(0);
+  const canvasRef = useRef();  
+
+  const timesRef = useRef(0);  
   const durationIntervalRef = useRef(null);
   const frameIntervalRef = useRef(null);
+
+  const [isStart, setIsStart] = useState(false);
 
   //canvas functions
   const drawHeatmap = (ctx, data) => {
@@ -90,9 +94,9 @@ export const FlowChart = ({ info, width, height, xcount, ycount }) => {
       }
     }
   };
-  const updateTrailPerDuration = (ctx, dataDuration) => {      
-    let new_data = _.cloneDeep(dataDuration);    
-    
+  const updateTrailPerDuration = (ctx, dataDuration) => {
+    let new_data = _.cloneDeep(dataDuration);
+
     for (let j = 0; j < new_data.length; j++) {
       for (let k = 0; k < new_data[j].shows.length; k++) {
         new_data[j].shows[k].from.x = ratio.x * new_data[j].shows[k].from.x;
@@ -146,33 +150,43 @@ export const FlowChart = ({ info, width, height, xcount, ycount }) => {
   useEffect(() => {
     const ctx = canvasRef.current.getContext("2d");
     ctx.translate(margins.left, margins.top);
-    initSettings();
+    initSettings();    
   }, []);
 
   useEffect(() => {
     initSettings();
+    setIsStart(false);
   }, [info, xcount, ycount]);
   const onStart = e => {
     e.preventDefault();
+    setIsStart(true);
     initSettings();
     drawTrail(info.dt);
   };
 
-  const onPause = e => {};
+  //   const onPause = e => {
+  //       e.preventDefault();
+  //   };
 
   return (
     <div>
       <Row>
         <Col style={{ padding: 4, display: "flex", alignItems: "center" }}>
           <Button onClick={onStart} style={{ margin: 8 }}>
-            Start!
+            Start
           </Button>
-          <Button onClick={onPause} style={{ margin: 8 }}>
-            Playing
-          </Button>
+          {/* <Button onClick={onPause} style={{ margin: 8 }}>
+            Pause
+          </Button> */}
           {/* pause ? "Paused" : "Playing"} */}
+          
         </Col>
       </Row>
+      {isStart && <Row>
+        <Col style={{ padding: 4, display: "flex", alignItems: "center" }}>
+          <Slider dateFrom={info.dateFrom} dateTo={info.dateTo} duration={duration * info.totalTimes } width={width} height={60} />
+        </Col>
+      </Row>}
       <div
         className="chartArea"
         style={{ width: width, height: height, backgroundColor: "white" }}

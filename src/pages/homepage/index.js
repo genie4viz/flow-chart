@@ -17,7 +17,7 @@ const App = () => {
 
   const [isLoading, setIsLoading] = useState(false);  
   const [period, setPeriod] = useState(60);
-  const [isSetting, setIsSetting] = useState(false);
+  const [isSetting, setIsSetting] = useState(false);  
   const [threshold, setThreshold] = useState(20);  
 
   const fdataRef = useRef(null);
@@ -104,13 +104,13 @@ const App = () => {
             </Col>
             <Col span={2}>
               <Button loading={isSetting} onClick={onSet}>Set</Button>
-            </Col>
+            </Col>            
           </Row> 
           {adataRef.current &&
             <Row>
               <Col
                 style={{
-                  padding: 16,
+                  padding: 4,
                   margin: 4,
                   display: "flex",
                   justifyContent: "center",
@@ -122,7 +122,7 @@ const App = () => {
                   width={1000}
                   height={600}
                   xcount={xcount}
-                  ycount={ycount}
+                  ycount={ycount}                  
                 />
               </Col>
             </Row>
