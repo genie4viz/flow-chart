@@ -2,7 +2,6 @@ import React, { useEffect, useRef } from "react";
 import _ from "lodash";
 import { getOpacity } from "../../globals";
 import mall from "../../static/mall.png";
-import { isS } from "xmlchars/xml/1.0/ed5";
 
 const FPS = 60;
 
@@ -74,8 +73,8 @@ export const FlowChart = ({
   const updatePosition = data => {
     for (let j = 0; j < data.length; j++) {
       for (let k = 0; k < data[j].shows.length; k++) {
-        data[j].shows[k].from.x += data[j].shows[k].step.x;
-        data[j].shows[k].from.y += data[j].shows[k].step.y;
+        data[j].shows[k].from_x += data[j].shows[k].step_x;
+        data[j].shows[k].from_y += data[j].shows[k].step_y;
       }
     }
   };
@@ -89,8 +88,8 @@ export const FlowChart = ({
     for (let j = 0; j < data.length; j++) {
       for (let k = 0; k < data[j].shows.length; k++) {
         ctx.fillRect(
-          data[j].shows[k].from.x - 1.5,
-          data[j].shows[k].from.y - 1.5,
+          data[j].shows[k].from_x - 1.5,
+          data[j].shows[k].from_y - 1.5,
           3,
           3
         );
@@ -98,22 +97,17 @@ export const FlowChart = ({
     }
   };
   const updateTrailPerDuration = (ctx, dataDuration) => {
-    let new_data = _.cloneDeep(dataDuration);
+    let new_data = [];
+    new_data = _.cloneDeep(dataDuration);
 
     for (let j = 0; j < new_data.length; j++) {
       for (let k = 0; k < new_data[j].shows.length; k++) {
-        new_data[j].shows[k].from.x = ratio.x * new_data[j].shows[k].from.x;
-        new_data[j].shows[k].from.y = ratio.y * new_data[j].shows[k].from.y;
-        new_data[j].shows[k].to.x = ratio.x * new_data[j].shows[k].to.x;
-        new_data[j].shows[k].to.y = ratio.y * new_data[j].shows[k].to.y;
-        new_data[j].shows[k].step = {
-          x:
-            (new_data[j].shows[k].to.x - new_data[j].shows[k].from.x) /
-            (duration * FPS),
-          y:
-            (new_data[j].shows[k].to.y - new_data[j].shows[k].from.y) /
-            (duration * FPS)
-        };
+        new_data[j].shows[k].from_x = ratio.x * new_data[j].shows[k].from_x;
+        new_data[j].shows[k].from_y = ratio.y * new_data[j].shows[k].from_y;
+        new_data[j].shows[k].to_x = ratio.x * new_data[j].shows[k].to_x;
+        new_data[j].shows[k].to_y = ratio.y * new_data[j].shows[k].to_y;
+        new_data[j].shows[k].step_x = (new_data[j].shows[k].to_x - new_data[j].shows[k].from_x) /(duration * FPS);
+        new_data[j].shows[k].step_y = (new_data[j].shows[k].to_y - new_data[j].shows[k].from_y) /(duration * FPS);
       }
     }
 
@@ -163,7 +157,7 @@ export const FlowChart = ({
       clearEachCell(ctx, 1);
       drawTrail(info.dt);
     }
-  }, [info, isStart]);
+  }, [isStart]);
 
   return (
     <div

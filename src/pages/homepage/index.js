@@ -11,7 +11,7 @@ import "./index.css";
 const { Header, Content, Footer } = Layout;
 
 const xcount = 5,
-  ycount = 4, duration = 5;
+  ycount = 4, duration = 3;
 
 const App = () => {
   const fileInputRef = useRef();
@@ -26,10 +26,14 @@ const App = () => {
   const adataRef = useRef(null);
 
   const handleReadCSV = inputedData => {
-    fdataRef.current = formatData(inputedData.data);
+    setIsLoading(true);
+    fdataRef.current = formatData(inputedData.data);    
     adjustData(fdataRef.current, period, threshold, xcount, ycount, res => {
       adataRef.current = res;
-      setIsLoading(false);
+      setTimeout(() => {
+        setIsStart(false);
+        setIsLoading(false);
+      }, 500);      
     });
   };
 

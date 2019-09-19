@@ -98,6 +98,7 @@ export const Slider = ({ dateFrom, dateTo, duration, width, height, isStart }) =
         currentValue = currentValue + w  / (duration * 10);      
         if (currentValue > targetValue) {    
           currentValue = 0;
+          handle.attr("cx", 0);
           clearInterval(timeIntervalRef.current);
         }
       }

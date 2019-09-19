@@ -10,7 +10,17 @@ export function formatData(data) {
   }
 
   const recordFieldLen = data[0].length;
+//   for(let i = 0; i < data.length; i++){
+//       if(i > 0){
+//         if (recordFieldLen === 4) {
+//             if(data[i][0] - data[i - 1][0] < 1000){// (1s = 1000 ms) if then, we will ignore this value and take last one of them.
 
+//             }
+//         }else{
+
+//         }      
+//       }
+//   }
   let new_data = data.map(d => {
     if (recordFieldLen === 4) {
       return {
@@ -94,14 +104,10 @@ function getCellData(data, threshold, w, h, xcount, ycount) {
         nested.forEach(n => {
           shows.push({
             key: n.key,
-            from: {
-              x: n.values[0].x,
-              y: n.values[0].y
-            },
-            to: {
-              x: n.values[n.values.length - 1].x,
-              y: n.values[n.values.length - 1].y
-            }
+            from_x: n.values[0].x,
+            from_y: n.values[0].y,
+            to_x: n.values[n.values.length - 1].x,
+            to_y: n.values[n.values.length - 1].y            
           });
         });
         cellInfo.push({
@@ -127,5 +133,5 @@ function ptInRect(x, y, rect) {
 
 export function getOpacity(appeardCount) {
   if (appeardCount > 100) appeardCount = 100;
-  return (0.5 / 100) * appeardCount;
+  return (0.3 / 100) * appeardCount;
 }
