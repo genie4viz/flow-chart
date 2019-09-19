@@ -1,15 +1,20 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef } from "react";
 import _ from "lodash";
-import { Row, Col, Button } from "antd";
-import {Slider} from './slider';
 import { getOpacity } from "../../globals";
 import mall from "../../static/mall.png";
+import { isS } from "xmlchars/xml/1.0/ed5";
 
 const FPS = 60;
-const duration = 5;
 
-export const FlowChart = ({ info, width, height, xcount, ycount }) => {
-  console.log(info, "chart");
+export const FlowChart = ({
+  info,
+  width,
+  height,
+  xcount,
+  ycount,
+  duration,
+  isStart
+}) => {
   //declare for drawing canvas
   const margins = { left: 30, right: 30, bottom: 30, top: 30 };
   const drawSz = {
@@ -26,13 +31,11 @@ export const FlowChart = ({ info, width, height, xcount, ycount }) => {
     vxStep = info.axisw / xcount,
     vyStep = info.axish / ycount;
   //-------------------------
-  const canvasRef = useRef();  
+  const canvasRef = useRef();
 
-  const timesRef = useRef(0);  
+  const timesRef = useRef(0);
   const durationIntervalRef = useRef(null);
   const frameIntervalRef = useRef(null);
-
-  const [isStart, setIsStart] = useState(false);
 
   //canvas functions
   const drawHeatmap = (ctx, data) => {
@@ -150,61 +153,36 @@ export const FlowChart = ({ info, width, height, xcount, ycount }) => {
   useEffect(() => {
     const ctx = canvasRef.current.getContext("2d");
     ctx.translate(margins.left, margins.top);
-    initSettings();    
+    initSettings();
   }, []);
 
   useEffect(() => {
     initSettings();
-    setIsStart(false);
-  }, [info, xcount, ycount]);
-  const onStart = e => {
-    e.preventDefault();
-    setIsStart(true);
-    initSettings();
-    drawTrail(info.dt);
-  };
-
-  //   const onPause = e => {
-  //       e.preventDefault();
-  //   };
+    if (isStart) {
+      const ctx = canvasRef.current.getContext("2d");
+      clearEachCell(ctx, 1);
+      drawTrail(info.dt);
+    }
+  }, [info, isStart]);
 
   return (
-    <div>
-      <Row>
-        <Col style={{ padding: 4, display: "flex", alignItems: "center" }}>
-          <Button onClick={onStart} style={{ margin: 8 }}>
-            Start
-          </Button>
-          {/* <Button onClick={onPause} style={{ margin: 8 }}>
-            Pause
-          </Button> */}
-          {/* pause ? "Paused" : "Playing"} */}
-          
-        </Col>
-      </Row>
-      {isStart && <Row>
-        <Col style={{ padding: 4, display: "flex", alignItems: "center" }}>
-          <Slider dateFrom={info.dateFrom} dateTo={info.dateTo} duration={duration * info.totalTimes } width={width} height={60} />
-        </Col>
-      </Row>}
-      <div
-        className="chartArea"
-        style={{ width: width, height: height, backgroundColor: "white" }}
-      >
-        <canvas
-          width={width}
-          height={height}
-          ref={canvasRef}
-          style={{ position: "fixed", zIndex: 0 }}
-        />
-        <img
-          src={mall}
-          width={width}
-          height={height}
-          alt=""
-          style={{ padding: 30, zIndex: 1, position: "fixed", opacity: 0.4 }}
-        />
-      </div>
+    <div
+      className="chartArea"
+      style={{ width: width, height: height, backgroundColor: "white" }}
+    >
+      <canvas
+        width={width}
+        height={height}
+        ref={canvasRef}
+        style={{ position: "fixed", zIndex: 0 }}
+      />
+      <img
+        src={mall}
+        width={width}
+        height={height}
+        alt=""
+        style={{ padding: 30, zIndex: 1, position: "fixed", opacity: 0.4 }}
+      />
     </div>
   );
 };
