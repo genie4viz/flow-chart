@@ -1,8 +1,8 @@
 import React, { useEffect, useRef } from "react";
 import _ from "lodash";
 import { getOpacity } from "../../globals";
-import mall from "../../static/mall.png";
 
+import './index.css';
 const FPS = 60;
 
 export const FlowChart = ({
@@ -49,7 +49,11 @@ export const FlowChart = ({
     }
   };
   const clearEachCell = (ctx, opacity = 0.01) => {
-    ctx.fillStyle = `rgba(255, 255, 255, ${opacity})`;
+    if(opacity !== 0.01 ){
+      ctx.fillStyle = `rgba(241, 242, 245, ${opacity})`;      
+    }else{
+      ctx.fillStyle = `rgba(255, 255, 255, ${opacity})`;
+    }    
     ctx.fillRect(0, 0, width, height);
   };
   const drawAxis = ctx => {
@@ -162,21 +166,16 @@ export const FlowChart = ({
   return (
     <div
       className="chartArea"
-      style={{ width: width, height: height, backgroundColor: "white" }}
+      style={{ width: width, height: height}}
     >
       <canvas
+        className="canvasArea"
         width={width}
         height={height}
         ref={canvasRef}
-        style={{ position: "fixed", zIndex: 0 }}
+        style={{opacity: 0.6}}
       />
-      <img
-        src={mall}
-        width={width}
-        height={height}
-        alt=""
-        style={{ padding: 30, zIndex: 1, position: "fixed", opacity: 0.4 }}
-      />
+
     </div>
   );
 };
