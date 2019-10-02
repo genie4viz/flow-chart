@@ -19,7 +19,7 @@ const App = () => {
   const fileInputRef = useRef();
 
   const [isLoading, setIsLoading] = useState(false);
-  const [period, setPeriod] = useState(60);
+  const [period, setPeriod] = useState(1);
   const [isSetting, setIsSetting] = useState(false);
   const [isStart, setIsStart] = useState(false);
   const [threshold, setThreshold] = useState(1);

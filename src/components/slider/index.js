@@ -127,7 +127,7 @@ export const Slider = ({
         update(x.invert(currentValue));
 
         currentValue = currentValue + w / (duration * 10);
-        if (currentValue > targetValue) {
+        if (currentValue >= targetValue) {
           currentValue = 0;
           handle.attr("cx", 0);
           indicator.attr("x", -1);

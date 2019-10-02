@@ -1,11 +1,10 @@
 import React, { useEffect, useRef } from "react";
 import _ from "lodash";
-import { Row, Col } from "antd";
+import { Row } from "antd";
 import { Slider } from "../../components/slider";
 import { getOpacity } from "../../globals";
 
 import "./index.css";
-const FPS = 60;
 
 export const FlowChart = ({
   info,
@@ -29,8 +28,7 @@ export const FlowChart = ({
   //canvas functions
 
   //----------------
-  const initSettings = () => {
-    timesRef.current = 0;
+  const initSettings = () => {    
     clearInterval(durationIntervalRef.current);
     clearInterval(frameIntervalRef.current);
   };
@@ -56,6 +54,7 @@ export const FlowChart = ({
       vyStep = info.axish / ycount;
     initSettings();
     if (isStart) {
+      timesRef.current = 0;
       const ctx = canvasRef.current.getContext("2d");
       const drawHeatmap = (ctx, data) => {
         for (let i = 0; i < data.length; i++) {
@@ -117,6 +116,7 @@ export const FlowChart = ({
         updatePosition(dataFrame);
       };
       const updateTrailPerDuration = (ctx, dataDuration) => {
+
         let new_data = dataDuration;
         for (let j = 0; j < new_data.length; j++) {
           for (let k = 0; k < new_data[j].shows.length; k++) {
@@ -128,36 +128,29 @@ export const FlowChart = ({
             new_data[j].shows[k].cur_y = new_data[j].shows[k].from_y;
             new_data[j].shows[k].step_x =
               (new_data[j].shows[k].to_x - new_data[j].shows[k].from_x) /
-              (duration * FPS);
+              (duration * 1000 / 10);
               new_data[j].shows[k].step_y =
               (new_data[j].shows[k].to_y - new_data[j].shows[k].from_y) /
-              (duration * FPS);
+              (duration * 1000 / 10);
           }
         }
-
-        let overed = 0;
+        
         updateTrailPerFrame(ctx, new_data);
-        frameIntervalRef.current = setInterval(() => {
-          if (overed / FPS >= duration) {
-            clearEachCell(ctx, 1);
-            drawAxis(ctx);
-            clearInterval(frameIntervalRef.current);
-          }
+        frameIntervalRef.current = setInterval(() => {          
           updateTrailPerFrame(ctx, new_data);
-          overed++;
-        }, 1000 / FPS);
+        }, 10);
       };
       const drawTrail = dataTotal => {
         const ctx = canvasRef.current.getContext("2d");
         updateTrailPerDuration(ctx, dataTotal[timesRef.current]);
-        durationIntervalRef.current = setInterval(() => {
-          clearEachCell(ctx, 1);
-          drawAxis(ctx);
-          if (timesRef.current > dataTotal.length - 2) {            
+        durationIntervalRef.current = setInterval(() => {          
+          if (timesRef.current >= dataTotal.length - 1) {
+            clearInterval(frameIntervalRef.current);
             clearInterval(durationIntervalRef.current);            
           } else {
             timesRef.current++;
             if (dataTotal[timesRef.current].length > 0) {
+              clearInterval(frameIntervalRef.current);
               updateTrailPerDuration(ctx, dataTotal[timesRef.current]);
             }
           }
