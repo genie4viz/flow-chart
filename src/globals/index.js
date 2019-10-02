@@ -42,12 +42,12 @@ export function formatData(data) {
   });
   return {
     dt: new_data,    
-    axisw: Math.ceil(d3.max(new_data.map(d => d.x)) / 100) * 100,
-    axish: Math.ceil(d3.max(new_data.map(d => d.y)) / 100) * 100
+    // axisw: Math.ceil(d3.max(new_data.map(d => d.x)) / 100) * 100,
+    // axish: Math.ceil(d3.max(new_data.map(d => d.y)) / 100) * 100
   };
 }
 
-export function adjustData(data, period, threshold, xcount, ycount, cbFunc) {
+export function adjustData(data, period, threshold, xcount, ycount, axisw, axish, cbFunc) {
   //get Partial data  
   let partials = [],
     partial,
@@ -66,7 +66,7 @@ export function adjustData(data, period, threshold, xcount, ycount, cbFunc) {
     currentTo = currentFrom + periodMS;
     partial = data.dt.filter(d => d.ts >= currentFrom && d.ts <= currentTo);
     partials.push(
-      getCellData(partial, threshold, data.axisw, data.axish, xcount, ycount)
+      getCellData(partial, threshold, axisw, axish, xcount, ycount)
     );
   }
   cbFunc({
@@ -74,8 +74,8 @@ export function adjustData(data, period, threshold, xcount, ycount, cbFunc) {
     dateFrom: baseFrom,
     dateTo: baseFrom + times * periodMS, //baseTo
     totalTimes: times,
-    axisw: data.axisw,
-    axish: data.axish
+    axisw: axisw,
+    axish: axish
   });
 }
 //get data per each cell
@@ -107,7 +107,11 @@ function getCellData(data, threshold, w, h, xcount, ycount) {
             from_x: n.values[0].x,
             from_y: n.values[0].y,
             to_x: n.values[n.values.length - 1].x,
-            to_y: n.values[n.values.length - 1].y            
+            to_y: n.values[n.values.length - 1].y,
+            cur_x: n.values[0].x,
+            cur_y: n.values[0].y,
+            step_x: 0,
+            step_y: 0
           });
         });
         cellInfo.push({
