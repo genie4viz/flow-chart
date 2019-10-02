@@ -52,7 +52,12 @@ export const FlowChart = ({
       yStep = drawSz.h / ycount,
       vxStep = info.axisw / xcount,
       vyStep = info.axish / ycount;
+      
     initSettings();
+    const ctx = canvasRef.current.getContext("2d");
+    ctx.fillStyle = `rgba(255, 255, 255, 1)`;
+    ctx.fillRect(0, 0, width, height - 100);
+
     if (isStart) {
       timesRef.current = 0;
       const ctx = canvasRef.current.getContext("2d");
@@ -111,7 +116,7 @@ export const FlowChart = ({
       };
       const updateTrailPerFrame = (ctx, dataFrame) => {
         clearEachCell(ctx);
-        drawHeatmap(ctx, dataFrame);        
+        drawHeatmap(ctx, dataFrame);
         drawAxis(ctx);
         updatePosition(dataFrame);
       };
@@ -155,8 +160,7 @@ export const FlowChart = ({
             }
           }
         }, duration * 1000);
-      };
-      clearEachCell(ctx, 1);
+      };      
       drawTrail(info.dt);
     }
   }, [isStart, duration, width, height, margins.left, margins.right, margins.top, margins.bottom, xcount, ycount, info.dt, info.axisw, info.axish]);
