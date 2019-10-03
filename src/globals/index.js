@@ -10,17 +10,7 @@ export function formatData(data) {
   }
 
   const recordFieldLen = data[0].length;
-//   for(let i = 0; i < data.length; i++){
-//       if(i > 0){
-//         if (recordFieldLen === 4) {
-//             if(data[i][0] - data[i - 1][0] < 1000){// (1s = 1000 ms) if then, we will ignore this value and take last one of them.
 
-//             }
-//         }else{
-
-//         }      
-//       }
-//   }
   let new_data = data.map(d => {
     if (recordFieldLen === 4) {
       return {
@@ -40,19 +30,15 @@ export function formatData(data) {
       };
     }
   });
-  return {
-    dt: new_data,    
-    // axisw: Math.ceil(d3.max(new_data.map(d => d.x)) / 100) * 100,
-    // axish: Math.ceil(d3.max(new_data.map(d => d.y)) / 100) * 100
-  };
+  return new_data;
 }
 
-export function adjustData(data, period, threshold, xcount, ycount, axisw, axish, cbFunc) {
+export function adjustData(data, period, threshold, xcount, ycount, w, h, cbFunc) {
   //get Partial data  
   let partials = [],
     partial,
-    baseFrom = data.dt[0].ts,
-    baseTo = data.dt[data.dt.length - 1].ts,
+    baseFrom = data[0].ts,
+    baseTo = data[data.length - 1].ts,
     periodMS = period * 1000,
     times =
       Math.round((baseTo - baseFrom) / periodMS) < 1
@@ -64,18 +50,16 @@ export function adjustData(data, period, threshold, xcount, ycount, axisw, axish
   for (let i = 0; i < times; i++) {
     currentFrom = baseFrom + i * periodMS;
     currentTo = currentFrom + periodMS;
-    partial = data.dt.filter(d => d.ts >= currentFrom && d.ts <= currentTo);
+    partial = data.filter(d => d.ts >= currentFrom && d.ts <= currentTo);
     partials.push(
-      getCellData(partial, threshold, axisw, axish, xcount, ycount)
+      getCellData(partial, threshold, w, h, xcount, ycount)
     );
   }
   cbFunc({
     dt: partials,
     dateFrom: baseFrom,
     dateTo: baseFrom + times * periodMS, //baseTo
-    totalTimes: times,
-    axisw: axisw,
-    axish: axish
+    totalTimes: times
   });
 }
 //get data per each cell
@@ -107,9 +91,7 @@ function getCellData(data, threshold, w, h, xcount, ycount) {
             from_x: n.values[0].x,
             from_y: n.values[0].y,
             to_x: n.values[n.values.length - 1].x,
-            to_y: n.values[n.values.length - 1].y,
-            cur_x: n.values[0].x,
-            cur_y: n.values[0].y,
+            to_y: n.values[n.values.length - 1].y,            
             step_x: 0,
             step_y: 0
           });

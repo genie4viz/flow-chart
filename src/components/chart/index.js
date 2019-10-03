@@ -1,10 +1,5 @@
 import React, { useEffect, useRef } from "react";
-import _ from "lodash";
-import { Row } from "antd";
-import { Slider } from "../../components/slider";
 import { getOpacity } from "../../globals";
-
-import "./index.css";
 
 export const FlowChart = ({
   info,
@@ -13,11 +8,9 @@ export const FlowChart = ({
   xcount,
   ycount,
   duration,
-  period,
   isStart
-}) => {
-  //declare for drawing canvas
-  const margins = { left: 30, right: 30, bottom: 30, top: 30 };  
+}) => {  
+    
   //-------------------------
   const canvasRef = useRef();
 
@@ -31,36 +24,19 @@ export const FlowChart = ({
   const initSettings = () => {    
     clearInterval(durationIntervalRef.current);
     clearInterval(frameIntervalRef.current);
-  };
-  useEffect(() => {
-    const ctx = canvasRef.current.getContext("2d");
-    ctx.translate(margins.left, margins.top);
-    initSettings();
-  }, [margins.left, margins.top]);
+  };  
 
   useEffect(() => {
-    const drawSz = {
-      w: width - margins.left - margins.right,
-      h: height - 100 - margins.top - margins.bottom
-    };
-    const ratio = {
-      x: drawSz.w / info.axisw,
-      y: drawSz.h / info.axish
-    };
-  
-    const xStep = drawSz.w / xcount,
-      yStep = drawSz.h / ycount,
-      vxStep = info.axisw / xcount,
-      vyStep = info.axish / ycount;
+    const xStep = width / xcount,
+      yStep = height / ycount;      
       
     initSettings();
     const ctx = canvasRef.current.getContext("2d");
     ctx.fillStyle = `rgba(255, 255, 255, 1)`;
-    ctx.fillRect(0, 0, width, height - 100);
+    ctx.fillRect(0, 0, width, height);
 
     if (isStart) {
-      timesRef.current = 0;
-      const ctx = canvasRef.current.getContext("2d");
+      timesRef.current = 0;      
       const drawHeatmap = (ctx, data) => {
         for (let i = 0; i < data.length; i++) {
           ctx.fillStyle = `rgba(200, 0, 0, ${getOpacity(data[i].id_counts)})`;
@@ -78,7 +54,7 @@ export const FlowChart = ({
         } else {
           ctx.fillStyle = `rgba(255, 255, 255, ${opacity})`;
         }
-        ctx.fillRect(0, 0, width, height - 100);
+        ctx.fillRect(0, 0, width, height);
       };
       const drawAxis = ctx => {
         ctx.beginPath();
@@ -88,13 +64,11 @@ export const FlowChart = ({
 
         for (let i = 0; i < xcount + 1; i++) {
           ctx.moveTo(i * xStep, 0);
-          ctx.lineTo(i * xStep, drawSz.h);
-          ctx.fillText(i * vxStep, i * xStep, -4);
+          ctx.lineTo(i * xStep, height);          
         }
         for (let j = 0; j < ycount + 1; j++) {
           ctx.moveTo(0, j * yStep);
-          ctx.lineTo(drawSz.w, j * yStep);
-          if (j !== 0) ctx.fillText(j * vyStep, -10, j * yStep + 4);
+          ctx.lineTo(width, j * yStep);          
         }
         ctx.stroke();
       };
@@ -102,13 +76,13 @@ export const FlowChart = ({
         ctx.fillStyle = "#0000ff";
         for (let j = 0; j < dataPoints.length; j++) {
           for (let k = 0; k < dataPoints[j].shows.length; k++) {
-            dataPoints[j].shows[k].cur_x += dataPoints[j].shows[k].step_x;
-            dataPoints[j].shows[k].cur_y += dataPoints[j].shows[k].step_y;
+            dataPoints[j].shows[k].from_x += dataPoints[j].shows[k].step_x;
+            dataPoints[j].shows[k].from_y += dataPoints[j].shows[k].step_y;
             ctx.fillRect(
-              dataPoints[j].shows[k].cur_x - 1.5,
-              dataPoints[j].shows[k].cur_y - 1.5,
-              3,
-              3
+              dataPoints[j].shows[k].from_x - 1.2,
+              dataPoints[j].shows[k].from_y - 1.2,
+              2.4,
+              2.4
             );
           }
         }
@@ -121,13 +95,7 @@ export const FlowChart = ({
       const updateTrailPerDuration = (ctx, dataDuration) => {
         let new_data = JSON.parse(JSON.stringify(dataDuration)); 
         for (let j = 0; j < new_data.length; j++) {
-          for (let k = 0; k < new_data[j].shows.length; k++) {
-            new_data[j].shows[k].from_x = ratio.x * new_data[j].shows[k].from_x;
-            new_data[j].shows[k].from_y = ratio.y * new_data[j].shows[k].from_y;            
-            new_data[j].shows[k].to_x = ratio.x * new_data[j].shows[k].to_x;
-            new_data[j].shows[k].to_y = ratio.y * new_data[j].shows[k].to_y;
-            new_data[j].shows[k].cur_x = new_data[j].shows[k].from_x;
-            new_data[j].shows[k].cur_y = new_data[j].shows[k].from_y;
+          for (let k = 0; k < new_data[j].shows.length; k++) {            
             new_data[j].shows[k].step_x =
               (new_data[j].shows[k].to_x - new_data[j].shows[k].from_x) /
               (duration * 1000 / 10);
@@ -161,33 +129,18 @@ export const FlowChart = ({
             }
           }
         }, duration * 1000);
-      };      
+      };
+      clearEachCell(ctx, 1);
       drawTrail(info.dt);
     }
-  }, [isStart, duration, width, height, margins.left, margins.right, margins.top, margins.bottom, xcount, ycount, info.dt, info.axisw, info.axish]);
-
+  }, [isStart, duration, width, height, xcount, ycount, info.dt]);
+  
   return (
-    <div className="chartArea" style={{ width: width, height: height }}>
-      <Row>
-        <canvas
-          className="canvasArea"
-          width={width}
-          height={height - 100}
-          ref={canvasRef}
-          style={{  opacity: 0.6 }} //background: `url('${}')`,
-        />
-      </Row>
-      <Row>
-        <Slider
-          dateFrom={info.dateFrom}
-          dateTo={info.dateTo}
-          duration={duration * info.totalTimes}
-          period={period} //unit is mins.
-          width={1000}
-          height={100}
-          isStart={isStart}
-        />
-      </Row>
-    </div>
+    <canvas          
+      width={width}
+      height={height}
+      ref={canvasRef}
+      style={{opacity: 0.8}}
+    />
   );
 };
