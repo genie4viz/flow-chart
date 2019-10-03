@@ -147,7 +147,7 @@ const App = () => {
           <Row
             style={{              
               padding: 8,
-              display: "flex",              
+              display: "flex",
             }}
           >
             <Col span={24}>

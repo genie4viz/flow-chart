@@ -103,9 +103,7 @@ export const FlowChart = ({
               (new_data[j].shows[k].to_y - new_data[j].shows[k].from_y) /
               (duration * 1000 / 10);
           }
-        }
-        clearEachCell(ctx, 1);
-        drawAxis(ctx);
+        }        
         updateTrailPerFrame(ctx, new_data);
         frameIntervalRef.current = setInterval(() => {          
           updateTrailPerFrame(ctx, new_data);
@@ -120,17 +118,17 @@ export const FlowChart = ({
             clearInterval(durationIntervalRef.current);            
           } else {
             clearInterval(frameIntervalRef.current);
+            // clearEachCell(ctx, 1);
+            drawAxis(ctx);
             timesRef.current++;
             if (dataTotal[timesRef.current].length > 0) {              
               updateTrailPerDuration(ctx, dataTotal[timesRef.current]);
-            } else {
-              clearEachCell(ctx, 1);
-              drawAxis(ctx);
-            }
+            } 
           }
         }, duration * 1000);
       };
       clearEachCell(ctx, 1);
+      drawAxis(ctx);
       drawTrail(info.dt);
     }
   }, [isStart, duration, width, height, xcount, ycount, info.dt]);
