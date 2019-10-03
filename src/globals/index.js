@@ -53,7 +53,7 @@ export function adjustData(data, period, threshold, xcount, ycount, axisw, axish
     partial,
     baseFrom = data.dt[0].ts,
     baseTo = data.dt[data.dt.length - 1].ts,
-    periodMS = period * 60 * 1000,
+    periodMS = period * 1000,
     times =
       Math.round((baseTo - baseFrom) / periodMS) < 1
         ? 1

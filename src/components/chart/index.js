@@ -98,16 +98,15 @@ export const FlowChart = ({
         }
         ctx.stroke();
       };
-      const updatePosition = dataPoints => {
-        let new_data = dataPoints;
+      const updatePosition = dataPoints => {        
         ctx.fillStyle = "#0000ff";
-        for (let j = 0; j < new_data.length; j++) {
-          for (let k = 0; k < new_data[j].shows.length; k++) {
-            new_data[j].shows[k].cur_x += new_data[j].shows[k].step_x;
-            new_data[j].shows[k].cur_y += new_data[j].shows[k].step_y;
+        for (let j = 0; j < dataPoints.length; j++) {
+          for (let k = 0; k < dataPoints[j].shows.length; k++) {
+            dataPoints[j].shows[k].cur_x += dataPoints[j].shows[k].step_x;
+            dataPoints[j].shows[k].cur_y += dataPoints[j].shows[k].step_y;
             ctx.fillRect(
-              new_data[j].shows[k].cur_x - 1.5,
-              new_data[j].shows[k].cur_y - 1.5,
+              dataPoints[j].shows[k].cur_x - 1.5,
+              dataPoints[j].shows[k].cur_y - 1.5,
               3,
               3
             );
@@ -116,13 +115,11 @@ export const FlowChart = ({
       };
       const updateTrailPerFrame = (ctx, dataFrame) => {
         clearEachCell(ctx);
-        drawHeatmap(ctx, dataFrame);
-        drawAxis(ctx);
+        drawHeatmap(ctx, dataFrame);        
         updatePosition(dataFrame);
       };
       const updateTrailPerDuration = (ctx, dataDuration) => {
-
-        let new_data = dataDuration;
+        let new_data = JSON.parse(JSON.stringify(dataDuration)); 
         for (let j = 0; j < new_data.length; j++) {
           for (let k = 0; k < new_data[j].shows.length; k++) {
             new_data[j].shows[k].from_x = ratio.x * new_data[j].shows[k].from_x;
@@ -139,7 +136,8 @@ export const FlowChart = ({
               (duration * 1000 / 10);
           }
         }
-        
+        clearEachCell(ctx, 1);
+        drawAxis(ctx);
         updateTrailPerFrame(ctx, new_data);
         frameIntervalRef.current = setInterval(() => {          
           updateTrailPerFrame(ctx, new_data);
@@ -153,10 +151,13 @@ export const FlowChart = ({
             clearInterval(frameIntervalRef.current);
             clearInterval(durationIntervalRef.current);            
           } else {
+            clearInterval(frameIntervalRef.current);
             timesRef.current++;
-            if (dataTotal[timesRef.current].length > 0) {
-              clearInterval(frameIntervalRef.current);
+            if (dataTotal[timesRef.current].length > 0) {              
               updateTrailPerDuration(ctx, dataTotal[timesRef.current]);
+            } else {
+              clearEachCell(ctx, 1);
+              drawAxis(ctx);
             }
           }
         }, duration * 1000);
@@ -173,7 +174,7 @@ export const FlowChart = ({
           width={width}
           height={height - 100}
           ref={canvasRef}
-          style={{ opacity: 0.6 }}
+          style={{  opacity: 0.6 }} //background: `url('${}')`,
         />
       </Row>
       <Row>

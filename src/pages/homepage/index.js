@@ -108,12 +108,12 @@ const App = () => {
             >
               <InputNumber
                 min={1}
-                max={360}
+                max={113000}
                 style={{ margin: "0 8px" }}
                 value={period}
                 onChange={onChangePeriod}
               />
-              mins
+              seconds
             </Col>
             <Col
               span={3}
