@@ -31,8 +31,7 @@ const App = () => {
   const [threshold, setThreshold] = useState(1);
   const [bgImage, setBgImage] = useState(null);
   const [imgDimen, setImgDimen] = useState({width: 640, height: 480});
-  const [currentPlayTime, setCurrentPlayTime] = useState(0);
-
+  
   const fdataRef = useRef(null);
   const adataRef = useRef(null);
   const fileUploaderRef = useRef();
@@ -52,8 +51,7 @@ const App = () => {
         setTimeout(() => {
           adataRef.current = res;
           setIsStart(false);
-          setIsLoading(false);
-          setCurrentPlayTime(adataRef.current.dateFrom);
+          setIsLoading(false);  
         }, 500);
       }
     );
@@ -66,15 +64,6 @@ const App = () => {
   const onImportBg = () => {
     fileUploaderRef.current.click();
   };
-
-  const onChangingSlider = () => {
-    setIsStart(false);
-  }
-
-  const onChangedSlider = currentMS => {    
-    setCurrentPlayTime(currentMS);
-    setIsStart(true);
-  }
 
   const onChangeBgFile = e => {
     e.stopPropagation();
@@ -122,8 +111,7 @@ const App = () => {
       imgDimen.height,
       res => {
         setTimeout(() => {
-          adataRef.current = res;
-          setCurrentPlayTime(adataRef.current.dateFrom);
+          adataRef.current = res;          
           setIsSetting(false);
         }, 500);
       }
@@ -215,8 +203,7 @@ const App = () => {
               height={imgDimen.height}
               xcount={xcount}
               ycount={ycount}
-              bgImage={bgImage}
-              currentTime={currentPlayTime}
+              bgImage={bgImage}              
               duration={duration} // seconds for period
               isStart={isStart}
             />
