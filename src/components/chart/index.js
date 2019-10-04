@@ -66,10 +66,12 @@ export const FlowChart = ({
       const ruler = svg
         .append("g")
         .attr('class', 'ruler')
-        .attr("transform", `translate(${margin.left}, 24)`)
-        .call(d3.axisBottom(x).ticks(10).tickSize(50));//days instead of 10
+        .attr("transform", `translate(${margin.left}, 20)`)
+        .call(d3.axisBottom(x).ticks(10).tickSize(52));//days instead of 10
       
-      // ruler.select("path.domain").remove();
+      ruler
+        .selectAll('text')
+        .attr('dy', 12);
 
       const slider = svg
         .append("g")
@@ -159,13 +161,13 @@ export const FlowChart = ({
         update(x.invert(current));
 
         current = current + w / info.dt.length;        
-        if (current >= targetValue) {
+        // if (current >= targetValue) {
           // current = 0;
           // handle.attr("cx", 0);
           // indicator.attr("x", -1);
           // label.attr("transform", "translate(0," + 20 + ")");
           // clearInterval(timeIntervalRef.current);
-        }
+        // }
       }
 
       const update = h => {        
