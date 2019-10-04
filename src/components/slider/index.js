@@ -8,10 +8,12 @@ const parseDate = d3.timeParse("%m/%d/%y");
 export const Slider = ({
   dateFrom,
   dateTo,
-  duration,
-  period,//mins
+  duration,  
   width,
   height,
+  currentTime, 
+  onChangingSlider,
+  onChangedSlider,
   isStart
 }) => {
   const svgRef = useRef();
@@ -24,7 +26,7 @@ export const Slider = ({
       }
       const startDate = new Date(dateFrom),
         endDate = new Date(dateTo);
-      console.log(startDate, endDate, 'from to times')
+      
       const margin = { top: 0, right: 40, bottom: 0, left: 40 },
         w = width - margin.left - margin.right,
         h = height - margin.top - margin.bottom;
@@ -62,18 +64,26 @@ export const Slider = ({
         .select(function() {
           return this.parentNode.appendChild(this.cloneNode(true));
         })
-        .attr("class", "track-overlay");
-      //   .call(
-      //     d3
-      //       .drag()
-      //       .on("start.interrupt", function() {
-      //         slider.interrupt();
-      //       })
-      //       .on("start drag", function() {
-      //         currentValue = d3.event.x;
-      //         update(x.invert(currentValue));
-      //       })
-      //   );
+        .attr("class", "track-overlay")
+        .call(
+          d3
+            .drag()
+            .on("start.interrupt", function() {
+              slider.interrupt();
+            })
+            .on("start", function() {              
+              onChangingSlider();
+            })
+            .on("drag", function() {              
+              currentValue = d3.event.x;
+              update(x.invert(currentValue));              
+            })
+            .on("end", function() {
+              currentValue = d3.event.x;
+              const date = new Date(x.invert(currentValue));
+              onChangedSlider(date.getTime());              
+            })
+        );
 
       slider
         .insert("g", ".track-overlay")
@@ -101,7 +111,6 @@ export const Slider = ({
         .attr('width', 3)
         .attr('height', 40)
         .attr('fill', 'red')
-        
 
       const label = slider
         .append("text")
@@ -121,12 +130,12 @@ export const Slider = ({
       ruler.select("path.domain").remove();
 
       step();
-      timeIntervalRef.current = setInterval(step, 100);
+      timeIntervalRef.current = setInterval(step, 1000);
 
       function step() {
         update(x.invert(currentValue));
 
-        currentValue = currentValue + w / (duration * 10);
+        currentValue = currentValue + w / (duration);
         if (currentValue >= targetValue) {
           currentValue = 0;
           handle.attr("cx", 0);
@@ -142,6 +151,6 @@ export const Slider = ({
         label.attr("x", x(h)).text(formatDate(h));
       }
     }
-  }, [dateFrom, dateTo, width, height, duration, isStart]);
+  }, [dateFrom, dateTo, width, height, duration, onChangedSlider, onChangingSlider, isStart]);
   return <svg width={width} height={height} ref={svgRef} />;
 };

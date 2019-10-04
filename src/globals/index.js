@@ -50,15 +50,16 @@ export function adjustData(data, period, threshold, xcount, ycount, w, h, cbFunc
   for (let i = 0; i < times; i++) {
     currentFrom = baseFrom + i * periodMS;
     currentTo = currentFrom + periodMS;
-    partial = data.filter(d => d.ts >= currentFrom && d.ts <= currentTo);
+    partial = data.filter(d => d.ts >= currentFrom && d.ts < currentTo);
     partials.push(
       getCellData(partial, threshold, w, h, xcount, ycount)
     );
   }
   cbFunc({
     dt: partials,
-    dateFrom: baseFrom,
+    dateFrom: baseFrom,    
     dateTo: baseFrom + times * periodMS, //baseTo
+    periodMS: periodMS, 
     totalTimes: times
   });
 }
@@ -119,5 +120,16 @@ function ptInRect(x, y, rect) {
 
 export function getOpacity(appeardCount) {
   if (appeardCount > 100) appeardCount = 100;
-  return (0.3 / 100) * appeardCount;
+  return (1 / 100) * appeardCount;
+}
+
+export function getCurrentIndex(currentTime, dataFrom, dateTo, period, times) {  
+  for(let i = 0; i < times; i++){
+    let currentFrom = dataFrom + i * period;
+    let currentTo = currentFrom + period;
+    if(currentTime >= currentFrom && currentTime < currentTo){
+      return i;
+    }
+  }
+  return 0;
 }

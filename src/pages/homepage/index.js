@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, Fragment } from "react";
 import { CSVReader } from "react-papaparse";
 import {
   Layout,
@@ -25,12 +25,13 @@ const App = () => {
   const fileInputRef = useRef();
 
   const [isLoading, setIsLoading] = useState(false);
-  const [period, setPeriod] = useState(1);
+  const [period, setPeriod] = useState(60);
   const [isSetting, setIsSetting] = useState(false);
   const [isStart, setIsStart] = useState(false);
   const [threshold, setThreshold] = useState(1);
   const [bgImage, setBgImage] = useState(null);
   const [imgDimen, setImgDimen] = useState({width: 640, height: 480});
+  const [currentPlayTime, setCurrentPlayTime] = useState(0);
 
   const fdataRef = useRef(null);
   const adataRef = useRef(null);
@@ -47,11 +48,12 @@ const App = () => {
       ycount,
       imgDimen.width,
       imgDimen.height,
-      res => {
-        adataRef.current = res;
+      res => {        
         setTimeout(() => {
+          adataRef.current = res;
           setIsStart(false);
           setIsLoading(false);
+          setCurrentPlayTime(adataRef.current.dateFrom);
         }, 500);
       }
     );
@@ -64,6 +66,15 @@ const App = () => {
   const onImportBg = () => {
     fileUploaderRef.current.click();
   };
+
+  const onChangingSlider = () => {
+    setIsStart(false);
+  }
+
+  const onChangedSlider = currentMS => {    
+    setCurrentPlayTime(currentMS);
+    setIsStart(true);
+  }
 
   const onChangeBgFile = e => {
     e.stopPropagation();
@@ -112,6 +123,7 @@ const App = () => {
       res => {
         setTimeout(() => {
           adataRef.current = res;
+          setCurrentPlayTime(adataRef.current.dateFrom);
           setIsSetting(false);
         }, 500);
       }
@@ -196,52 +208,42 @@ const App = () => {
               </Button>
             </Col>
           </Row>          
-          <Row>              
-            <Col
-              style={{
-                padding: 4,
-                margin: 4,
-                display: "flex",
-                justifyContent: "center"
-              }}
-            >
-              <div className="chartArea" 
-                style={{
-                  display: 'flex',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  width: imgDimen.width,
-                  height: imgDimen.height,
-                  background: 'url(' + bgImage + ') no-repeat',
-                  opacity: 0.8
-              }}>
-                {adataRef.current && 
-                  <FlowChart
-                    info={adataRef.current}
-                    width={imgDimen.width}
-                    height={imgDimen.height}
-                    xcount={xcount}
-                    ycount={ycount}
-                    duration={duration} // seconds for period                      
-                    isStart={isStart}
-                  />
-                }
-              </div>              
-            </Col>            
-          </Row>
-          <Row style={{display: 'flex', justifyContent:'center', alignItems: 'center'}}>
-            {adataRef.current && 
-              <Slider
-                dateFrom={adataRef.current.dateFrom}
-                dateTo={adataRef.current.dateTo}
-                duration={duration * adataRef.current.totalTimes}
-                period={period} //unit is mins.
-                width={imgDimen.width}
-                height={100}
-                isStart={isStart}
-              />
-            }
-          </Row>
+          {adataRef.current ? 
+            <FlowChart
+              info={adataRef.current}
+              width={imgDimen.width}
+              height={imgDimen.height}
+              xcount={xcount}
+              ycount={ycount}
+              bgImage={bgImage}
+              currentTime={currentPlayTime}
+              duration={duration} // seconds for period
+              isStart={isStart}
+            />
+            : <Fragment>
+                <Row>              
+                  <Col
+                    style={{
+                      padding: 4,
+                      margin: 4,
+                      display: "flex",
+                      justifyContent: "center"
+                    }}
+                  >
+                    <div className="chartArea" 
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        width: imgDimen.width,
+                        height: imgDimen.height,
+                        background: 'url(' + bgImage + ') no-repeat'
+                    }}>
+                    </div>
+                  </Col>            
+                </Row>                
+              </Fragment>
+          }
           {isLoading && (
             <Row>
               <Col

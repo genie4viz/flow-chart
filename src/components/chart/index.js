@@ -1,5 +1,6 @@
-import React, { useEffect, useRef } from "react";
-import { getOpacity } from "../../globals";
+import React, { useEffect, useRef, Fragment } from "react";
+import {Row, Col, Slider} from "antd";
+import { getOpacity, getCurrentIndex } from "../../globals";
 
 export const FlowChart = ({
   info,
@@ -7,10 +8,12 @@ export const FlowChart = ({
   height,
   xcount,
   ycount,
+  bgImage, 
   duration,
+  currentTime,
   isStart
 }) => {  
-    
+  console.log(info, 'to show')
   //-------------------------
   const canvasRef = useRef();
 
@@ -21,11 +24,11 @@ export const FlowChart = ({
   //canvas functions
 
   //----------------
-  const initSettings = () => {    
+  const initSettings = () => {
     clearInterval(durationIntervalRef.current);
     clearInterval(frameIntervalRef.current);
-  };  
-
+  };
+  
   useEffect(() => {
     const xStep = width / xcount,
       yStep = height / ycount;      
@@ -36,31 +39,40 @@ export const FlowChart = ({
     ctx.fillRect(0, 0, width, height);
 
     if (isStart) {
-      timesRef.current = 0;      
+      timesRef.current = getCurrentIndex(currentTime, info.dateFrom, info.dateTo, info.periodMS, info.totalTimes);      
       const drawHeatmap = (ctx, data) => {
-        for (let i = 0; i < data.length; i++) {
+        
+          for(let i = 0; i < xcount; i++){
+            for(let j = 0; j < ycount; j++){
+              ctx.fillStyle = `rgba(255, 255, 255, 0.05)`;
+              ctx.fillRect(
+                i * xStep + 1,
+                j * yStep + 1,
+                xStep - 2,
+                yStep - 2
+              );
+            }
+          }
+            
+        for(let i = 0; i < data.length; i++){          
           ctx.fillStyle = `rgba(200, 0, 0, ${getOpacity(data[i].id_counts)})`;
           ctx.fillRect(
-            data[i].xi * xStep + 2,
-            data[i].yi * yStep + 2,
-            xStep - 4,
-            yStep - 4
+            data[i].xi * xStep + 1,
+            data[i].yi * yStep + 1,
+            xStep - 2,
+            yStep - 2
           );
-        }
+        } 
       };
-      const clearEachCell = (ctx, opacity = 0.01) => {
-        if (opacity !== 0.01) {
-          ctx.fillStyle = `rgba(241, 242, 245, ${opacity})`;
-        } else {
-          ctx.fillStyle = `rgba(255, 255, 255, ${opacity})`;
-        }
+
+      const clearCanvas = (ctx) => {
+        ctx.fillStyle = `rgb(255, 255, 255)`;
         ctx.fillRect(0, 0, width, height);
-      };
+      }
+      
       const drawAxis = ctx => {
-        ctx.beginPath();
-        ctx.strokeStyle = "rgba(0,0,0,1)";
-        ctx.fillStyle = "grey";
-        ctx.textAlign = "center";
+        ctx.beginPath();        
+        ctx.fillStyle = "black";        
 
         for (let i = 0; i < xcount + 1; i++) {
           ctx.moveTo(i * xStep, 0);
@@ -87,13 +99,12 @@ export const FlowChart = ({
           }
         }
       };
-      const updateTrailPerFrame = (ctx, dataFrame) => {
-        clearEachCell(ctx);
-        drawHeatmap(ctx, dataFrame);        
+      const updateTrailPerFrame = (ctx, dataFrame, prevData) => {        
+        drawHeatmap(ctx, dataFrame, prevData);
         updatePosition(dataFrame);
       };
-      const updateTrailPerDuration = (ctx, dataDuration) => {
-        let new_data = JSON.parse(JSON.stringify(dataDuration)); 
+      const updateTrailPerDuration = (ctx, dataDuration, prevData) => {
+        let new_data = JSON.parse(JSON.stringify(dataDuration));
         for (let j = 0; j < new_data.length; j++) {
           for (let k = 0; k < new_data[j].shows.length; k++) {            
             new_data[j].shows[k].step_x =
@@ -104,43 +115,66 @@ export const FlowChart = ({
               (duration * 1000 / 10);
           }
         }
-        clearEachCell(ctx, 1);
-        drawAxis(ctx);
-        updateTrailPerFrame(ctx, new_data);
+        updateTrailPerFrame(ctx, new_data, prevData);
         frameIntervalRef.current = setInterval(() => {          
-          updateTrailPerFrame(ctx, new_data);
+          updateTrailPerFrame(ctx, new_data, prevData);
         }, 10);
       };
       const drawTrail = dataTotal => {
         const ctx = canvasRef.current.getContext("2d");
-        updateTrailPerDuration(ctx, dataTotal[timesRef.current]);
-        durationIntervalRef.current = setInterval(() => {          
+        updateTrailPerDuration(ctx, dataTotal[timesRef.current], null);
+        durationIntervalRef.current = setInterval(() => {
           if (timesRef.current >= dataTotal.length - 1) {
             clearInterval(frameIntervalRef.current);
             clearInterval(durationIntervalRef.current);            
           } else {
-            clearInterval(frameIntervalRef.current);
+            clearInterval(frameIntervalRef.current);            
+            drawAxis(ctx);
             timesRef.current++;
             if (dataTotal[timesRef.current].length > 0) {              
-              updateTrailPerDuration(ctx, dataTotal[timesRef.current]);
-            } else {
-              clearEachCell(ctx, 1);
-              drawAxis(ctx);
-            }
+              updateTrailPerDuration(ctx, dataTotal[timesRef.current], dataTotal[timesRef.current - 1]);
+            } 
           }
         }, duration * 1000);
       };
-      clearEachCell(ctx, 1);
+      clearCanvas(ctx);
+      drawAxis(ctx);
       drawTrail(info.dt);
     }
-  }, [isStart, duration, width, height, xcount, ycount, info.dt]);
+  }, [isStart, duration, width, height, xcount, ycount, info.dt, info.dateFrom, info.dateTo, info.totalTimes, info.periodMS, currentTime]);
   
   return (
-    <canvas          
-      width={width}
-      height={height}
-      ref={canvasRef}
-      style={{opacity: 0.8}}
-    />
+    <Fragment>
+      <Row>              
+        <Col
+          style={{
+            padding: 4,
+            margin: 4,
+            display: "flex",
+            justifyContent: "center"
+          }}
+        >
+          <div className="chartArea" 
+            style={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              width: width,
+              height: height,
+              background: 'url(' + bgImage + ') no-repeat'
+          }}>            
+            <canvas          
+              width={width}
+              height={height}
+              ref={canvasRef}
+              style={{opacity: 0.5}}
+            />            
+          </div>
+        </Col>            
+      </Row>
+      <Row style={{display: 'flex', justifyContent:'center', alignItems: 'center'}}>        
+        <Slider defaultValue={30} tooltipVisible />
+      </Row>
+    </Fragment>
   );
 };
