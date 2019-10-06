@@ -33,7 +33,7 @@ export function formatData(data) {
   return new_data;
 }
 
-export function adjustData(data, period, threshold, xcount, ycount, w, h, cbFunc) {
+export function adjustData(data, period, dwell, threshold, xcount, ycount, w, h, cbFunc) {
   //get Partial data  
   let partials = [],
     partial,
@@ -52,19 +52,19 @@ export function adjustData(data, period, threshold, xcount, ycount, w, h, cbFunc
     currentTo = currentFrom + periodMS;
     partial = data.filter(d => d.ts >= currentFrom && d.ts <= currentTo);
     partials.push(
-      getCellData(partial, threshold, w, h, xcount, ycount)
+      getCellData(partial, threshold, w, h, xcount, ycount, periodMS, dwell)
     );
   }
   cbFunc({
     dt: partials,
     dateFrom: baseFrom,    
     dateTo: baseFrom + times * periodMS, //baseTo
-    periodMS: periodMS, 
+    periodMS: periodMS,
     totalTimes: times
   });
 }
 //get data per each cell
-function getCellData(data, threshold, w, h, xcount, ycount) {
+function getCellData(data, threshold, w, h, xcount, ycount, periodMS, dwell) {
   let cellInfo = [],
     stepX = w / xcount,
     stepY = h / ycount,
@@ -84,24 +84,36 @@ function getCellData(data, threshold, w, h, xcount, ycount) {
         .key(d => d.device + ":" + d.id)
         .entries(subs);
       
-      if (nested.length >= threshold) {
+      if (nested.length >= threshold) {        
         let shows = [];
-        nested.forEach(n => {
-          shows.push({
+        nested.forEach(n => {          
+          let show_record = {
             key: n.key,
             from_x: n.values[0].x,
             from_y: n.values[0].y,
             to_x: n.values[n.values.length - 1].x,
-            to_y: n.values[n.values.length - 1].y,            
+            to_y: n.values[n.values.length - 1].y,
+            cur_x: n.values[0].x,
+            cur_y: n.values[0].y,
             step_x: 0,
-            step_y: 0
-          });
+            step_y: 0,
+            is_squarable: false,
+            square_grad: 0,
+          }
+          
+          const diff =  n.values[n.values.length - 1].ts - n.values[0].ts;
+          
+          if(diff >= dwell * 1000){
+            show_record.is_squarable = true;
+            show_record.square_grad = 255 * diff/periodMS;
+          }
+          shows.push(show_record);
         });
         cellInfo.push({
           xi: i,
           yi: j,
           id_counts: nested.length,
-          shows: shows
+          shows: shows,
         });
       }
     }

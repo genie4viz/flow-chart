@@ -126,10 +126,8 @@ export const FlowChart = ({
             .on("end", function() {
               current = d3.event.x;
               const date = x.invert(current);              
-              const nearDate = getNearDate(date, info.dateFrom, info.dateTo, info.periodMS, info.totalTimes);
-              // console.log(x(nearDate), 'drag end position')
+              const nearDate = getNearDate(date, info.dateFrom, info.dateTo, info.periodMS, info.totalTimes);              
               current = x(nearDate);
-              // update(nearDate);//days instead of 10
               timesRef.current = getCurrentIndex(date, info.dateFrom, info.dateTo, info.periodMS, info.totalTimes);              
               drawTrail(info.dt);
             })
@@ -220,26 +218,43 @@ export const FlowChart = ({
         }
         ctx.stroke();
       };
-      const updatePosition = dataPoints => {        
+
+      const drawDwellSquares = dataPoints => {
+        for (let j = 0; j < dataPoints.length; j++) {
+          for (let k = 0; k < dataPoints[j].shows.length; k++) {
+            if(dataPoints[j].shows[k].is_squarable){
+              ctx.fillStyle = `rgba(0, ${dataPoints[j].shows[k].square_grad}, ${dataPoints[j].shows[k].square_grad})`;
+              ctx.fillRect(
+                dataPoints[j].shows[k].from_x - 10,
+                dataPoints[j].shows[k].from_y - 10,
+                20,
+                20
+              );
+            }
+          }
+        }
+      }
+      const updatePosition = dataPoints => {
         ctx.fillStyle = "#0000ff";
         for (let j = 0; j < dataPoints.length; j++) {
           for (let k = 0; k < dataPoints[j].shows.length; k++) {
-            dataPoints[j].shows[k].from_x += dataPoints[j].shows[k].step_x;
-            dataPoints[j].shows[k].from_y += dataPoints[j].shows[k].step_y;
+            dataPoints[j].shows[k].cur_x += dataPoints[j].shows[k].step_x;
+            dataPoints[j].shows[k].cur_y += dataPoints[j].shows[k].step_y;
             ctx.fillRect(
-              dataPoints[j].shows[k].from_x - 1.2,
-              dataPoints[j].shows[k].from_y - 1.2,
+              dataPoints[j].shows[k].cur_x - 1.2,
+              dataPoints[j].shows[k].cur_y - 1.2,
               2.4,
               2.4
             );
           }
         }
       };
-      const updateTrailPerFrame = (ctx, dataFrame, prevData) => {        
-        drawHeatmap(ctx, dataFrame, prevData);
+      const updateTrailPerFrame = (ctx, dataFrame) => {        
+        drawHeatmap(ctx, dataFrame);
         updatePosition(dataFrame);
+        drawDwellSquares(dataFrame);
       };
-      const updateTrailPerDuration = (ctx, dataDuration, prevData) => {
+      const updateTrailPerDuration = (ctx, dataDuration) => {
         let new_data = JSON.parse(JSON.stringify(dataDuration));
         for (let j = 0; j < new_data.length; j++) {
           for (let k = 0; k < new_data[j].shows.length; k++) {            
@@ -251,9 +266,10 @@ export const FlowChart = ({
               (duration * 1000 / 10);
           }
         }
-        updateTrailPerFrame(ctx, new_data, prevData);
+        
+        updateTrailPerFrame(ctx, new_data);
         frameIntervalRef.current = setInterval(() => {          
-          updateTrailPerFrame(ctx, new_data, prevData);
+          updateTrailPerFrame(ctx, new_data);
         }, 10);
       };
       const drawTrail = dataTotal => {        

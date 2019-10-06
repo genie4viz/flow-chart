@@ -5,27 +5,27 @@ import {
   Button,
   Row,
   Col,
-  InputNumber,  
+  InputNumber,
   Icon
 } from "antd";
 import { ClipLoader } from "react-spinners";
 
 import { formatData, adjustData } from "../../globals";
 import { FlowChart } from "../../components/chart";
-import { Slider } from "../../components/slider";
 import "./index.css";
 
 const { Header, Content, Footer } = Layout;
 
 const xcount = 8,
   ycount = 6,
-  duration = 1;  
+  duration = 1;
 
 const App = () => {
   const fileInputRef = useRef();
 
   const [isLoading, setIsLoading] = useState(false);
-  const [period, setPeriod] = useState(60);
+  const [period, setPeriod] = useState(10);
+  const [dwell, setDwell] = useState(5);
   const [isSetting, setIsSetting] = useState(false);
   const [isStart, setIsStart] = useState(false);
   const [threshold, setThreshold] = useState(1);
@@ -42,6 +42,7 @@ const App = () => {
     adjustData(
       fdataRef.current,
       period,
+      dwell,
       threshold,
       xcount,
       ycount,
@@ -57,13 +58,9 @@ const App = () => {
     );
   };
 
-  const handleOnError = (err, file, inputElem, reason) => {
-    console.log(err);
-  };
+  const handleOnError = (err, file, inputElem, reason) => console.log(err);
 
-  const onImportBg = () => {
-    fileUploaderRef.current.click();
-  };
+  const onImportBg = () => fileUploaderRef.current.click();
 
   const onChangeBgFile = e => {
     e.stopPropagation();
@@ -89,13 +86,9 @@ const App = () => {
     fileInputRef.current.click();
   };
 
-  const onChangePeriod = value => {
-    setPeriod(value);
-  };
-
-  const onChangeThreshold = value => {
-    setThreshold(value);
-  };
+  const onChangePeriod = value => setPeriod(value);
+  const onChangeDwelltime = value => setDwell(value);
+  const onChangeThreshold = value => setThreshold(value);
 
   const onSet = e => {
     e.preventDefault();
@@ -104,6 +97,7 @@ const App = () => {
     adjustData(
       fdataRef.current,
       period,
+      dwell,
       threshold,
       xcount,
       ycount,
@@ -170,7 +164,15 @@ const App = () => {
                 value={period}
                 onChange={onChangePeriod}
               />
-              seconds            
+              seconds
+              <InputNumber
+                min={1}
+                max={period}
+                style={{ margin: 8 }}
+                value={dwell}
+                onChange={onChangeDwelltime}
+              />
+              seconds(Dwell)
               <InputNumber
                 min={1}
                 max={300}
