@@ -15,7 +15,8 @@ export const FlowChart = ({
   ycount,
   bgImage, 
   duration,
-  isStart
+  isStart,
+  isPause
 }) => {  
   console.log(info, 'to show')
   //-------------------------
@@ -48,255 +49,274 @@ export const FlowChart = ({
     initSettings();
     const ctx = canvasRef.current.getContext("2d");
     ctx.fillStyle = `rgba(255, 255, 255, 1)`;
-    ctx.fillRect(0, 0, width, height);
-
-    if (isStart) {
-      timesRef.current = 0;
-      const svg = d3.select(svgRef.current);
-      svg.selectAll("*").remove();
-      let current = 0;
-      let targetValue = w;
-
-      const x = d3
-        .scaleTime()
-        .domain([startDate, endDate])
-        .range([0, targetValue])
-        .clamp(true);
-
-      const ruler = svg
-        .append("g")
-        .attr('class', 'ruler')
-        .attr("transform", `translate(${margin.left}, 20)`)
-        .call(d3.axisBottom(x).ticks(10).tickSize(52));//days instead of 10
+    ctx.fillRect(0, 0, width, height);    
       
-      ruler
-        .selectAll('text')
-        .attr('dy', 12);
+    const svg = d3.select(svgRef.current);
+    svg.selectAll("*").remove();
+    let current = 0;
+    let targetValue = w;
 
-      const slider = svg
-        .append("g")
-        .attr("class", "slider")
-        .attr("transform", "translate(" + margin.left + "," + h / 2 + ")");
-      //ticks
-      // slider
-      //   .insert("g", ".track-overlay")
-      //   .attr("class", "ticks")
-      //   .attr("transform", "translate(0, 20)")
-      //   .selectAll("text")
-      //   .data(x.ticks(10))
-      //   .enter()
-      //   .append("text")
-      //   .attr("x", x)
-      //   .attr("y", 10)
-      //   .attr("text-anchor", "middle")
-      //   .text(d => 'a');//parseDate(d)
-      slider
-        .append("rect")
-        .attr("class", "track")
-        .attr("rx", 5)
-        .attr("ry", 5)
-        .attr("x", x.range()[0])
-        .attr("y", -20)
-        .attr("width", x.range()[1])
-        .attr("height", 40)
-        .attr("fill", "grey")
-        .attr("fill-opacity", 0.6)
-        .select(function() {
-          return this.parentNode.appendChild(this.cloneNode(true));
-        })
-        .attr("class", "track-inset")
-        .select(function() {
-          return this.parentNode.appendChild(this.cloneNode(true));
-        })
-        .attr("class", "track-overlay")
-        .call(
-          d3
-            .drag()
-            .on("start.interrupt", function() {
-              slider.interrupt();
-            })
-            .on("start", function() {
-              clearInterval(frameIntervalRef.current);
-              clearInterval(durationIntervalRef.current);
-            })
-            .on("drag", function() {              
-              current = d3.event.x;
-              update(x.invert(current));
-            })
-            .on("end", function() {
-              current = d3.event.x;
-              const date = x.invert(current);              
-              const nearDate = getNearDate(date, info.dateFrom, info.dateTo, info.periodMS, info.totalTimes);              
-              current = x(nearDate);
-              timesRef.current = getCurrentIndex(date, info.dateFrom, info.dateTo, info.periodMS, info.totalTimes);              
-              drawTrail(info.dt);
-            })
-        );
+    const x = d3
+      .scaleTime()
+      .domain([startDate, endDate])
+      .range([0, targetValue])
+      .clamp(true);
 
-      const handle = slider
-        .insert("circle", ".track-overlay")
-        .attr("class", "handle")
-        .attr("cy", -30)
-        .attr("r", 9);
-      const indicator = slider
-        .insert("rect", ".track-overlay")
-        .attr("class", "handle-indicator")        
-        .attr('x', -1)
-        .attr('y', -20)
-        .attr('width', 3)
-        .attr('height', 40)
-        .attr('fill', 'red')
+    const ruler = svg
+      .append("g")
+      .attr('class', 'ruler')
+      .attr("transform", `translate(${margin.left}, 20)`)
+      .call(d3.axisBottom(x).ticks(10).tickSize(52));//days instead of 10
+    
+    ruler
+      .selectAll('text')
+      .attr('dy', 12);
 
-      const label = slider
-        .append("text")
-        .attr("class", "label")
-        .attr("text-anchor", "middle")
-        .attr("font-size", 10)
-        .text(formatDate(startDate))
-        .attr("transform", "translate(0," + 20 + ")");
+    const slider = svg
+      .append("g")
+      .attr("class", "slider")
+      .attr("transform", "translate(" + margin.left + "," + h / 2 + ")");
+    //ticks
+    // slider
+    //   .insert("g", ".track-overlay")
+    //   .attr("class", "ticks")
+    //   .attr("transform", "translate(0, 20)")
+    //   .selectAll("text")
+    //   .data(x.ticks(10))
+    //   .enter()
+    //   .append("text")
+    //   .attr("x", x)
+    //   .attr("y", 10)
+    //   .attr("text-anchor", "middle")
+    //   .text(d => 'a');//parseDate(d)
+    slider
+      .append("rect")
+      .attr("class", "track")
+      .attr("rx", 5)
+      .attr("ry", 5)
+      .attr("x", x.range()[0])
+      .attr("y", -20)
+      .attr("width", x.range()[1])
+      .attr("height", 40)
+      .attr("fill", "grey")
+      .attr("fill-opacity", 0.6)
+      .select(function() {
+        return this.parentNode.appendChild(this.cloneNode(true));
+      })
+      .attr("class", "track-inset")
+      .select(function() {
+        return this.parentNode.appendChild(this.cloneNode(true));
+      })
+      .attr("class", "track-overlay")
+      .call(
+        d3
+          .drag()
+          .on("start.interrupt", function() {
+            slider.interrupt();
+          })
+          .on("start", function() {
+            clearInterval(frameIntervalRef.current);
+            clearInterval(durationIntervalRef.current);
+          })
+          .on("drag", function() {              
+            current = d3.event.x;
+            update(x.invert(current));
+          })
+          .on("end", function() {
+            current = d3.event.x;
+            const date = x.invert(current);              
+            const nearDate = getNearDate(date, info.dateFrom, info.dateTo, info.periodMS, info.totalTimes);              
+            current = x(nearDate);
+            timesRef.current = getCurrentIndex(date, info.dateFrom, info.dateTo, info.periodMS, info.totalTimes);              
+            drawTrail(info.dt);
+          })
+      );
+
+    const handle = slider
+      .insert("circle", ".track-overlay")
+      .attr("class", "handle")
+      .attr("cy", -30)
+      .attr("r", 9);
+    const indicator = slider
+      .insert("rect", ".track-overlay")
+      .attr("class", "handle-indicator")        
+      .attr('x', -1)
+      .attr('y', -20)
+      .attr('width', 3)
+      .attr('height', 40)
+      .attr('fill', 'red')
+
+    const label = slider
+      .append("text")
+      .attr("class", "label")
+      .attr("text-anchor", "middle")
+      .attr("font-size", 10)
+      .text(formatDate(startDate))
+      .attr("transform", "translate(0," + 20 + ")");
+    
+    const step = () => {
+      update(x.invert(current));
+
+      current = current + w / info.dt.length;        
+      // if (current >= targetValue) {
+        // current = 0;
+        // handle.attr("cx", 0);
+        // indicator.attr("x", -1);
+        // label.attr("transform", "translate(0," + 20 + ")");
+        // clearInterval(timeIntervalRef.current);
+      // }
+    }
+
+    const update = h => {        
+      handle.attr("cx", x(h));
+      indicator.attr("x", x(h) - 1);
+      label.attr("x", x(h)).text(formatDate(h));
+    }
+
+    const drawHeatmap = (ctx, data) => {
       
-      const step = () => {
-        update(x.invert(current));
-
-        current = current + w / info.dt.length;        
-        // if (current >= targetValue) {
-          // current = 0;
-          // handle.attr("cx", 0);
-          // indicator.attr("x", -1);
-          // label.attr("transform", "translate(0," + 20 + ")");
-          // clearInterval(timeIntervalRef.current);
-        // }
-      }
-
-      const update = h => {        
-        handle.attr("cx", x(h));
-        indicator.attr("x", x(h) - 1);
-        label.attr("x", x(h)).text(formatDate(h));
-      }
-
-      const drawHeatmap = (ctx, data) => {
-        
-          for(let i = 0; i < xcount; i++){
-            for(let j = 0; j < ycount; j++){
-              ctx.fillStyle = `rgba(255, 255, 255, 0.05)`;
-              ctx.fillRect(
-                i * xStep + 1,
-                j * yStep + 1,
-                xStep - 2,
-                yStep - 2
-              );
-            }
-          }
-            
-        for(let i = 0; i < data.length; i++){          
-          ctx.fillStyle = `rgba(200, 0, 0, ${getOpacity(data[i].id_counts)})`;
-          ctx.fillRect(
-            data[i].xi * xStep + 1,
-            data[i].yi * yStep + 1,
-            xStep - 2,
-            yStep - 2
-          );
-        } 
-      };
-
-      const clearCanvas = (ctx) => {
-        ctx.fillStyle = `rgb(255, 255, 255)`;
-        ctx.fillRect(0, 0, width, height);
-      }
-      
-      const drawAxis = ctx => {
-        ctx.beginPath();        
-        ctx.fillStyle = "black";        
-
-        for (let i = 0; i < xcount + 1; i++) {
-          ctx.moveTo(i * xStep, 0);
-          ctx.lineTo(i * xStep, height);          
-        }
-        for (let j = 0; j < ycount + 1; j++) {
-          ctx.moveTo(0, j * yStep);
-          ctx.lineTo(width, j * yStep);          
-        }
-        ctx.stroke();
-      };
-
-      const drawDwellSquares = dataPoints => {
-        for (let j = 0; j < dataPoints.length; j++) {
-          for (let k = 0; k < dataPoints[j].shows.length; k++) {
-            if(dataPoints[j].shows[k].is_squarable){
-              ctx.fillStyle = `rgba(0, ${dataPoints[j].shows[k].square_grad}, ${dataPoints[j].shows[k].square_grad})`;
-              ctx.fillRect(
-                dataPoints[j].shows[k].from_x - 10,
-                dataPoints[j].shows[k].from_y - 10,
-                20,
-                20
-              );
-            }
-          }
-        }
-      }
-      const updatePosition = dataPoints => {
-        ctx.fillStyle = "#0000ff";
-        for (let j = 0; j < dataPoints.length; j++) {
-          for (let k = 0; k < dataPoints[j].shows.length; k++) {
-            dataPoints[j].shows[k].cur_x += dataPoints[j].shows[k].step_x;
-            dataPoints[j].shows[k].cur_y += dataPoints[j].shows[k].step_y;
+        for(let i = 0; i < xcount; i++){
+          for(let j = 0; j < ycount; j++){
+            ctx.fillStyle = `rgba(255, 255, 255, 0.05)`;
             ctx.fillRect(
-              dataPoints[j].shows[k].cur_x - 1.2,
-              dataPoints[j].shows[k].cur_y - 1.2,
-              2.4,
-              2.4
+              i * xStep + 1,
+              j * yStep + 1,
+              xStep - 2,
+              yStep - 2
             );
           }
         }
-      };
-      const updateTrailPerFrame = (ctx, dataFrame) => {        
-        drawHeatmap(ctx, dataFrame);
-        updatePosition(dataFrame);
-        drawDwellSquares(dataFrame);
-      };
-      const updateTrailPerDuration = (ctx, dataDuration) => {
-        let new_data = JSON.parse(JSON.stringify(dataDuration));
-        for (let j = 0; j < new_data.length; j++) {
-          for (let k = 0; k < new_data[j].shows.length; k++) {            
-            new_data[j].shows[k].step_x =
-              (new_data[j].shows[k].to_x - new_data[j].shows[k].from_x) /
-              (duration * 1000 / 10);
-              new_data[j].shows[k].step_y =
-              (new_data[j].shows[k].to_y - new_data[j].shows[k].from_y) /
-              (duration * 1000 / 10);
+          
+      for(let i = 0; i < data.length; i++){          
+        ctx.fillStyle = `rgba(200, 0, 0, ${getOpacity(data[i].id_counts)})`;
+        ctx.fillRect(
+          data[i].xi * xStep + 1,
+          data[i].yi * yStep + 1,
+          xStep - 2,
+          yStep - 2
+        );
+      } 
+    };
+
+    const clearCanvas = (ctx) => {
+      ctx.fillStyle = `rgb(255, 255, 255)`;
+      ctx.fillRect(0, 0, width, height);
+    }
+    
+    const drawAxis = ctx => {
+      ctx.beginPath();        
+      ctx.fillStyle = "black";        
+
+      for (let i = 0; i < xcount + 1; i++) {
+        ctx.moveTo(i * xStep, 0);
+        ctx.lineTo(i * xStep, height);          
+      }
+      for (let j = 0; j < ycount + 1; j++) {
+        ctx.moveTo(0, j * yStep);
+        ctx.lineTo(width, j * yStep);          
+      }
+      ctx.stroke();
+    };
+
+    const drawDwellSquares = dataPoints => {
+      for (let j = 0; j < dataPoints.length; j++) {
+        for (let k = 0; k < dataPoints[j].shows.length; k++) {
+          if(dataPoints[j].shows[k].is_squarable){
+            ctx.fillStyle = `rgba(0, ${dataPoints[j].shows[k].square_grad}, ${dataPoints[j].shows[k].square_grad})`;
+            ctx.fillRect(
+              dataPoints[j].shows[k].from_x - 10,
+              dataPoints[j].shows[k].from_y - 10,
+              20,
+              20
+            );
           }
         }
-        
-        updateTrailPerFrame(ctx, new_data);
-        frameIntervalRef.current = setInterval(() => {          
-          updateTrailPerFrame(ctx, new_data);
-        }, 10);
-      };
-      const drawTrail = dataTotal => {        
-        const ctx = canvasRef.current.getContext("2d");
-        clearCanvas(ctx);
-        drawAxis(ctx);
-        updateTrailPerDuration(ctx, dataTotal[timesRef.current], null);
-        step();
-        durationIntervalRef.current = setInterval(() => {
-          step();
-          if (timesRef.current >= dataTotal.length - 1) {
-            clearInterval(frameIntervalRef.current);
-            clearInterval(durationIntervalRef.current);
-          } else {
-            clearInterval(frameIntervalRef.current);            
-            drawAxis(ctx);
-            timesRef.current++;
-            if (dataTotal[timesRef.current].length > 0) {              
-              updateTrailPerDuration(ctx, dataTotal[timesRef.current], dataTotal[timesRef.current - 1]);
-            }            
-          }
-        }, duration * 1000);
-      };
+      }
+    }
+    const updatePosition = dataPoints => {
+      ctx.fillStyle = "#0000ff";
+      for (let j = 0; j < dataPoints.length; j++) {
+        for (let k = 0; k < dataPoints[j].shows.length; k++) {
+          dataPoints[j].shows[k].cur_x += dataPoints[j].shows[k].step_x;
+          dataPoints[j].shows[k].cur_y += dataPoints[j].shows[k].step_y;
+          ctx.fillRect(
+            dataPoints[j].shows[k].cur_x - 1.2,
+            dataPoints[j].shows[k].cur_y - 1.2,
+            2.4,
+            2.4
+          );
+        }
+      }
+    };
+    const updateTrailPerFrame = (ctx, dataFrame) => {        
+      drawHeatmap(ctx, dataFrame);
+      updatePosition(dataFrame);
+      drawDwellSquares(dataFrame);
+    };
+    const updateTrailPerDuration = (ctx, dataDuration, isPause) => {
+      let new_data = JSON.parse(JSON.stringify(dataDuration));
+      for (let j = 0; j < new_data.length; j++) {
+        for (let k = 0; k < new_data[j].shows.length; k++) {            
+          new_data[j].shows[k].step_x =
+            (new_data[j].shows[k].to_x - new_data[j].shows[k].from_x) /
+            (duration * 1000 / 10);
+            new_data[j].shows[k].step_y =
+            (new_data[j].shows[k].to_y - new_data[j].shows[k].from_y) /
+            (duration * 1000 / 10);
+        }
+      }
       
+      updateTrailPerFrame(ctx, new_data);
+      if(isPause) return;
+      frameIntervalRef.current = setInterval(() => {          
+        updateTrailPerFrame(ctx, new_data);
+      }, 10);
+    };
+    const drawTrail = (dataTotal, isPause = false) => {        
+      const ctx = canvasRef.current.getContext("2d");
+      clearCanvas(ctx);
+      drawAxis(ctx);
+      updateTrailPerDuration(ctx, dataTotal[timesRef.current]);
+      step();
+
+      if(isPause) {
+        clearInterval(frameIntervalRef.current);
+        clearInterval(durationIntervalRef.current);
+        return;
+      }
+
+      durationIntervalRef.current = setInterval(() => {
+        step();
+        if (timesRef.current >= dataTotal.length - 1) {
+          clearInterval(frameIntervalRef.current);
+          clearInterval(durationIntervalRef.current);
+          timesRef.current = 0;
+        } else {
+          clearInterval(frameIntervalRef.current);            
+          drawAxis(ctx);
+          timesRef.current++;
+          if (dataTotal[timesRef.current].length > 0) {              
+            updateTrailPerDuration(ctx, dataTotal[timesRef.current]);
+          }            
+        }
+      }, duration * 1000);
+    };
+    
+    if (isStart) {
+      timesRef.current = 0;
       drawTrail(info.dt);
     }
-  }, [isStart, duration, width, height, xcount, ycount, info.dt, info.dateFrom, info.dateTo, info.totalTimes, info.periodMS]);
+    if (isPause) {
+      current = x(info.dateFrom + timesRef.current * info.periodMS);
+      drawTrail(info.dt, true);
+    }else{
+      if(timesRef.current && timesRef.current !== 0){
+        current = x(info.dateFrom + timesRef.current * info.periodMS);
+        drawTrail(info.dt);
+      }
+    }
+    
+  }, [isStart, isPause, duration, width, height, xcount, ycount, info.dt, info.dateFrom, info.dateTo, info.totalTimes, info.periodMS]);
 
   return (
     <Fragment>

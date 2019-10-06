@@ -29,6 +29,7 @@ const App = () => {
   const [dwell, setDwell] = useState(5);
   const [isSetting, setIsSetting] = useState(false);
   const [isStart, setIsStart] = useState(false);
+  const [isPause, setIsPause] = useState(false);
   const [threshold, setThreshold] = useState(1);
   const [bgImage, setBgImage] = useState(null);
   const [imgDimen, setImgDimen] = useState({width: 640, height: 480});
@@ -54,6 +55,7 @@ const App = () => {
         setTimeout(() => {
           adataRef.current = res;
           setIsStart(false);
+          setIsPause(false);
           setIsLoading(false);  
         }, 500);
       }
@@ -97,6 +99,7 @@ const App = () => {
     e.preventDefault();
     setIsSetting(true);
     setIsStart(false);
+    setIsPause(false);
     adjustData(
       fdataRef.current,
       period,
@@ -109,7 +112,8 @@ const App = () => {
       res => {
         setTimeout(() => {
           adataRef.current = res;          
-          setIsSetting(false);
+          setIsSetting(0);
+
         }, 500);
       }
     );
@@ -117,10 +121,15 @@ const App = () => {
 
   const onStart = e => {
     setIsStart(false);
-    setTimeout(() => {
+    setTimeout(() => {      
       setIsStart(true);
     }, 500);
   };
+
+  const onPause = e => {
+    setIsStart(false);
+    setIsPause(!isPause);
+  }
 
   return (
     <Layout className="layout">
@@ -199,6 +208,13 @@ const App = () => {
               >
                 Start
               </Button>
+              <Button
+                onClick={onPause}
+                disabled={adataRef.current === null}
+                style={{ margin: 8 }}
+              >
+                {isPause ? 'Resume' : 'Pause'}
+              </Button>
               <Radio.Group onChange={onChangePlaySpeed} value={playSpeed}>
                 <Radio value={1}>1x</Radio>
                 <Radio value={2}>2x</Radio>
@@ -216,6 +232,7 @@ const App = () => {
               bgImage={bgImage}              
               duration={duration / playSpeed} // seconds for period              
               isStart={isStart}
+              isPause={isPause}
             />
             : <Fragment>
                 <Row>              
