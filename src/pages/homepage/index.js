@@ -3,6 +3,7 @@ import { CSVReader } from "react-papaparse";
 import {
   Layout,
   Button,
+  Radio,
   Row,
   Col,
   InputNumber,
@@ -18,7 +19,7 @@ const { Header, Content, Footer } = Layout;
 
 const xcount = 8,
   ycount = 6,
-  duration = 1;
+  duration = 4;
 
 const App = () => {
   const fileInputRef = useRef();
@@ -31,6 +32,7 @@ const App = () => {
   const [threshold, setThreshold] = useState(1);
   const [bgImage, setBgImage] = useState(null);
   const [imgDimen, setImgDimen] = useState({width: 640, height: 480});
+  const [playSpeed, setPlaySpeed] = useState(1); //1: 1x, 2: 2x, 4: 4x
   
   const fdataRef = useRef(null);
   const adataRef = useRef(null);
@@ -89,6 +91,7 @@ const App = () => {
   const onChangePeriod = value => setPeriod(value);
   const onChangeDwelltime = value => setDwell(value);
   const onChangeThreshold = value => setThreshold(value);
+  const onChangePlaySpeed = e => setPlaySpeed(e.target.value);
 
   const onSet = e => {
     e.preventDefault();
@@ -196,6 +199,11 @@ const App = () => {
               >
                 Start
               </Button>
+              <Radio.Group onChange={onChangePlaySpeed} value={playSpeed}>
+                <Radio value={1}>1x</Radio>
+                <Radio value={2}>2x</Radio>
+                <Radio value={4}>4x</Radio>
+              </Radio.Group>
             </Col>
           </Row>          
           {adataRef.current ? 
@@ -206,7 +214,7 @@ const App = () => {
               xcount={xcount}
               ycount={ycount}
               bgImage={bgImage}              
-              duration={duration} // seconds for period
+              duration={duration / playSpeed} // seconds for period              
               isStart={isStart}
             />
             : <Fragment>
