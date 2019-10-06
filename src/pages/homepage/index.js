@@ -56,7 +56,7 @@ const App = () => {
           adataRef.current = res;
           setIsStart(false);
           setIsPause(false);
-          setIsLoading(false);  
+          setIsLoading(false);
         }, 500);
       }
     );
