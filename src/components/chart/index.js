@@ -272,7 +272,7 @@ export const FlowChart = ({
         updateTrailPerFrame(ctx, new_data);
       }, 10);
     };
-    const drawTrail = (dataTotal, isPause = false) => {        
+    const drawTrail = (dataTotal, isPause = false) => {
       const ctx = canvasRef.current.getContext("2d");
       clearCanvas(ctx);
       drawAxis(ctx);
@@ -305,14 +305,15 @@ export const FlowChart = ({
     if (isStart) {
       timesRef.current = 0;
       drawTrail(info.dt);
-    }
-    if (isPause) {
-      current = x(info.dateFrom + timesRef.current * info.periodMS);
-      drawTrail(info.dt, true);
     }else{
-      if(timesRef.current && timesRef.current !== 0){
+      if (isPause) {
         current = x(info.dateFrom + timesRef.current * info.periodMS);
-        drawTrail(info.dt);
+        drawTrail(info.dt, true);
+      }else{
+        if(timesRef.current && timesRef.current !== 0){
+          current = x(info.dateFrom + timesRef.current * info.periodMS);
+          drawTrail(info.dt);
+        }
       }
     }
     
