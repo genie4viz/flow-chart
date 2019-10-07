@@ -2,8 +2,7 @@ import React, { useRef, useState, Fragment } from "react";
 import { CSVReader } from "react-papaparse";
 import {
   Layout,
-  Button,
-  Radio,
+  Button,  
   Row,
   Col,
   InputNumber,
@@ -28,12 +27,9 @@ const App = () => {
   const [period, setPeriod] = useState(10);
   const [dwell, setDwell] = useState(5);
   const [isSetting, setIsSetting] = useState(false);
-  const [isStart, setIsStart] = useState(false);
-  const [isPause, setIsPause] = useState(false);
   const [threshold, setThreshold] = useState(1);
   const [bgImage, setBgImage] = useState(null);
-  const [imgDimen, setImgDimen] = useState({width: 640, height: 480});
-  const [playSpeed, setPlaySpeed] = useState(1); //1: 1x, 2: 2x, 4: 4x
+  const [imgDimen, setImgDimen] = useState({width: 640, height: 480});  
   
   const fdataRef = useRef(null);
   const adataRef = useRef(null);
@@ -53,9 +49,7 @@ const App = () => {
       imgDimen.height,
       res => {        
         setTimeout(() => {
-          adataRef.current = res;
-          setIsStart(false);
-          setIsPause(false);
+          adataRef.current = res;          
           setIsLoading(false);
         }, 500);
       }
@@ -92,14 +86,11 @@ const App = () => {
 
   const onChangePeriod = value => setPeriod(value);
   const onChangeDwelltime = value => setDwell(value);
-  const onChangeThreshold = value => setThreshold(value);
-  const onChangePlaySpeed = e => setPlaySpeed(e.target.value);
+  const onChangeThreshold = value => setThreshold(value);  
 
   const onSet = e => {
     e.preventDefault();
-    setIsSetting(true);
-    setIsStart(false);
-    setIsPause(false);
+    setIsSetting(true);    
     adjustData(
       fdataRef.current,
       period,
@@ -118,18 +109,6 @@ const App = () => {
       }
     );
   };
-
-  const onStart = e => {
-    setIsStart(false);
-    setTimeout(() => {      
-      setIsStart(true);
-    }, 500);
-  };
-
-  const onPause = e => {
-    setIsStart(false);
-    setIsPause(!isPause);
-  }
 
   return (
     <Layout className="layout">
@@ -200,26 +179,7 @@ const App = () => {
                 style={{margin: 8}}
               >
                 Set
-              </Button>
-              <Button
-                onClick={onStart}
-                disabled={adataRef.current === null}
-                style={{ margin: 8 }}
-              >
-                Start
-              </Button>
-              <Button
-                onClick={onPause}
-                disabled={adataRef.current === null}
-                style={{ margin: 8 }}
-              >
-                {isPause ? 'Resume' : 'Pause'}
-              </Button>
-              <Radio.Group onChange={onChangePlaySpeed} value={playSpeed}>
-                <Radio value={1}>1x</Radio>
-                <Radio value={2}>2x</Radio>
-                <Radio value={4}>4x</Radio>
-              </Radio.Group>
+              </Button>              
             </Col>
           </Row>          
           {adataRef.current ? 
@@ -230,9 +190,7 @@ const App = () => {
               xcount={xcount}
               ycount={ycount}
               bgImage={bgImage}              
-              duration={duration / playSpeed} // seconds for period              
-              isStart={isStart}
-              isPause={isPause}
+              duration={duration} // seconds for period
             />
             : <Fragment>
                 <Row>              

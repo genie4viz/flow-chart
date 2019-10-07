@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, Fragment } from "react";
-import {Row, Col} from "antd";
+import React, { useEffect, useRef, Fragment, useState } from "react";
+import {Row, Col, Radio, Button, Icon} from "antd";
 import * as d3 from "d3";
 import { getOpacity, getCurrentIndex, getNearDate } from "../../globals";
 import "./index.css";
@@ -14,22 +14,26 @@ export const FlowChart = ({
   xcount,
   ycount,
   bgImage, 
-  duration,
-  isStart,
-  isPause
+  duration  
 }) => {  
   console.log(info, 'to show')
   //-------------------------
   const canvasRef = useRef();
-  const svgRef = useRef();
+  const svgRef = useRef();  
 
   const timesRef = useRef(0);
   const durationIntervalRef = useRef(null);
   const frameIntervalRef = useRef(null);
 
-  //canvas functions
-
-  //----------------
+  const [isStarted, setIsStarted] = useState(true);  
+  const [playSpeed, setPlaySpeed] = useState(1);
+  
+  const onStart = () => setIsStarted(!isStarted);  
+  const onChangePlaySpeed = e => {
+    timesRef.current = 0;
+    setPlaySpeed(e.target.value);
+  }
+  
   const initSettings = () => {
     clearInterval(durationIntervalRef.current);
     clearInterval(frameIntervalRef.current);
@@ -47,6 +51,7 @@ export const FlowChart = ({
     const days = endDate.getDate() - startDate.getDate();
 
     initSettings();
+    
     const ctx = canvasRef.current.getContext("2d");
     ctx.fillStyle = `rgba(255, 255, 255, 1)`;
     ctx.fillRect(0, 0, width, height);    
@@ -76,19 +81,7 @@ export const FlowChart = ({
       .append("g")
       .attr("class", "slider")
       .attr("transform", "translate(" + margin.left + "," + h / 2 + ")");
-    //ticks
-    // slider
-    //   .insert("g", ".track-overlay")
-    //   .attr("class", "ticks")
-    //   .attr("transform", "translate(0, 20)")
-    //   .selectAll("text")
-    //   .data(x.ticks(10))
-    //   .enter()
-    //   .append("text")
-    //   .attr("x", x)
-    //   .attr("y", 10)
-    //   .attr("text-anchor", "middle")
-    //   .text(d => 'a');//parseDate(d)
+    
     slider
       .append("rect")
       .attr("class", "track")
@@ -127,8 +120,8 @@ export const FlowChart = ({
             const date = x.invert(current);              
             const nearDate = getNearDate(date, info.dateFrom, info.dateTo, info.periodMS, info.totalTimes);              
             current = x(nearDate);
-            timesRef.current = getCurrentIndex(date, info.dateFrom, info.dateTo, info.periodMS, info.totalTimes);              
-            drawTrail(info.dt);
+            timesRef.current = getCurrentIndex(date, info.dateFrom, info.dateTo, info.periodMS, info.totalTimes);            
+            drawTrail(info.dt, true);
           })
       );
 
@@ -156,15 +149,7 @@ export const FlowChart = ({
     
     const step = () => {
       update(x.invert(current));
-
-      current = current + w / info.dt.length;        
-      // if (current >= targetValue) {
-        // current = 0;
-        // handle.attr("cx", 0);
-        // indicator.attr("x", -1);
-        // label.attr("transform", "translate(0," + 20 + ")");
-        // clearInterval(timeIntervalRef.current);
-      // }
+      current = current + w / info.dt.length;
     }
 
     const update = h => {        
@@ -259,10 +244,10 @@ export const FlowChart = ({
         for (let k = 0; k < new_data[j].shows.length; k++) {            
           new_data[j].shows[k].step_x =
             (new_data[j].shows[k].to_x - new_data[j].shows[k].from_x) /
-            (duration * 1000 / 10);
+            (duration/playSpeed * 1000 / 10);
             new_data[j].shows[k].step_y =
             (new_data[j].shows[k].to_y - new_data[j].shows[k].from_y) /
-            (duration * 1000 / 10);
+            (duration/playSpeed * 1000 / 10);
         }
       }
       
@@ -273,51 +258,42 @@ export const FlowChart = ({
       }, 10);
     };
     const drawTrail = (dataTotal, isPause = false) => {
+      clearInterval(frameIntervalRef.current);
+      clearInterval(durationIntervalRef.current);
       const ctx = canvasRef.current.getContext("2d");
       clearCanvas(ctx);
       drawAxis(ctx);
-      updateTrailPerDuration(ctx, dataTotal[timesRef.current]);
+      updateTrailPerDuration(ctx, dataTotal[timesRef.current], isPause);
       step();
 
-      if(isPause) {
-        clearInterval(frameIntervalRef.current);
-        clearInterval(durationIntervalRef.current);
-        return;
-      }
+      if(isPause) return;
 
       durationIntervalRef.current = setInterval(() => {
         step();
         if (timesRef.current >= dataTotal.length - 1) {
           clearInterval(frameIntervalRef.current);
           clearInterval(durationIntervalRef.current);
+          setIsStarted(false);
           timesRef.current = 0;
         } else {
           clearInterval(frameIntervalRef.current);            
           drawAxis(ctx);
           timesRef.current++;
           if (dataTotal[timesRef.current].length > 0) {              
-            updateTrailPerDuration(ctx, dataTotal[timesRef.current]);
+            updateTrailPerDuration(ctx, dataTotal[timesRef.current], isPause);
           }            
         }
-      }, duration * 1000);
+      }, duration/playSpeed * 1000);
     };
     
-    if (isStart) {
-      timesRef.current = 0;
+    if(isStarted){
+      current = x(info.dateFrom + timesRef.current * info.periodMS);
       drawTrail(info.dt);
     }else{
-      if (isPause) {
-        current = x(info.dateFrom + timesRef.current * info.periodMS);
-        drawTrail(info.dt, true);
-      }else{
-        if(timesRef.current && timesRef.current !== 0){
-          current = x(info.dateFrom + timesRef.current * info.periodMS);
-          drawTrail(info.dt);
-        }
-      }
+      current = x(info.dateFrom + timesRef.current * info.periodMS);
+      drawTrail(info.dt, true);
     }
-    
-  }, [isStart, isPause, duration, width, height, xcount, ycount, info.dt, info.dateFrom, info.dateTo, info.totalTimes, info.periodMS]);
+  }, [isStarted, playSpeed, duration, width, height, xcount, ycount, info.dt, info.dateFrom, info.dateTo, info.totalTimes, info.periodMS]);
 
   return (
     <Fragment>
@@ -347,6 +323,21 @@ export const FlowChart = ({
             />            
           </div>
         </Col>            
+      </Row>
+      <Row>
+        <Col span={24} style={{display:'flex', justifyContent:'center', alignItems:'center'}}>
+          <Button
+            onClick={onStart}
+            style={{ margin: 8, padding: 6 }}
+          >
+            {isStarted ? <Icon type="pause-circle"/> : <Icon type="play-circle"/>}
+          </Button>          
+          <Radio.Group onChange={onChangePlaySpeed} value={playSpeed}>
+            <Radio value={1}>1x</Radio>
+            <Radio value={2}>2x</Radio>
+            <Radio value={4}>4x</Radio>
+          </Radio.Group>
+        </Col>
       </Row>
       <Row style={{display: 'flex', justifyContent:'center', alignItems: 'center'}}>
         <svg width={width} height={100} ref={svgRef} />
