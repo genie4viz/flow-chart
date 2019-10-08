@@ -18,7 +18,9 @@ export function formatData(data) {
         ts: +d[0] * 1000,
         id: d[1],
         x: +d[2],
-        y: +d[3]
+        y: +d[3],
+        is_squarable: false,
+        square_grad: 0
       };
     } else {
       return {
@@ -26,7 +28,9 @@ export function formatData(data) {
         ts: +d[1] * 1000,
         id: d[2],
         x: +d[3],
-        y: +d[4]
+        y: +d[4],
+        is_squarable: false,
+        square_grad: 0
       };
     }
   });
@@ -46,13 +50,34 @@ export function adjustData(data, period, dwell, threshold, xcount, ycount, w, h,
         : Math.round((baseTo - baseFrom) / periodMS),
     currentFrom,
     currentTo;
-
+  
+  const id_nested_data = d3
+    .nest()
+    .key(d => d.device + ":" + d.id)
+    .entries(data);
+  
+  data.forEach(d => {
+    d.is_squarable = false;
+    d.square_grad = 0;
+  });
+  id_nested_data.forEach(dd => {
+    const diff =  dd.values[dd.values.length - 1].ts - dd.values[0].ts;
+    if(diff >= dwell * 1000){      
+      data.forEach(d => {
+        if(d.device + ":" + d.id === dd.key){
+          d.is_squarable = true;
+          d.square_grad = 255 * diff/(baseTo - baseFrom);  
+        }
+      });
+    }
+  });  
+  
   for (let i = 0; i < times; i++) {
     currentFrom = baseFrom + i * periodMS;
     currentTo = currentFrom + periodMS;
     partial = data.filter(d => d.ts >= currentFrom && d.ts <= currentTo);
     partials.push(
-      getCellData(partial, threshold, w, h, xcount, ycount, periodMS, dwell)
+      getCellData(partial, threshold, w, h, xcount, ycount)
     );
   }
   cbFunc({
@@ -64,7 +89,7 @@ export function adjustData(data, period, dwell, threshold, xcount, ycount, w, h,
   });
 }
 //get data per each cell
-function getCellData(data, threshold, w, h, xcount, ycount, periodMS, dwell) {
+function getCellData(data, threshold, w, h, xcount, ycount) {  
   let cellInfo = [],
     stepX = w / xcount,
     stepY = h / ycount,
@@ -97,21 +122,14 @@ function getCellData(data, threshold, w, h, xcount, ycount, periodMS, dwell) {
             cur_y: n.values[0].y,
             step_x: 0,
             step_y: 0,
-            is_squarable: false,
-            square_grad: 0,
-          }
-          
-          const diff =  n.values[n.values.length - 1].ts - n.values[0].ts;
-          
-          if(diff >= dwell * 1000){
-            show_record.is_squarable = true;
-            show_record.square_grad = 255 * diff/periodMS;
+            is_squarable: n.values[0].is_squarable,
+            square_grad: n.values[0].square_grad
           }
           shows.push(show_record);
         });
         cellInfo.push({
           xi: i,
-          yi: j,
+          yi: j,          
           id_counts: nested.length,
           shows: shows,
         });

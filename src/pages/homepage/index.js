@@ -21,15 +21,15 @@ const { Option } = Select;
 
 const xcount = 8,
   ycount = 6,
-  duration = 4;
+  duration = 1;
 
 const App = () => {
   const fileInputRef = useRef();  
   const timeZonesList = momentTZ.tz.names();
 
   const [isLoading, setIsLoading] = useState(false);
-  const [period, setPeriod] = useState(10);
-  const [dwell, setDwell] = useState(5);
+  const [period, setPeriod] = useState(1);
+  const [dwell, setDwell] = useState(10);
   const [isSetting, setIsSetting] = useState(false);
   const [threshold, setThreshold] = useState(1);
   const [bgImage, setBgImage] = useState(null);
@@ -96,7 +96,7 @@ const App = () => {
 
   const onSet = e => {
     e.preventDefault();
-    setIsSetting(true);    
+    setIsSetting(true);
     adjustData(
       fdataRef.current,
       period,
@@ -107,10 +107,9 @@ const App = () => {
       imgDimen.width,
       imgDimen.height,
       res => {
-        setTimeout(() => {
-          adataRef.current = res;          
-          setIsSetting(0);
-
+        setTimeout(() => {          
+          adataRef.current = res;
+          setIsSetting(false);
         }, 500);
       }
     );
@@ -164,7 +163,7 @@ const App = () => {
               seconds
               <InputNumber
                 min={1}
-                max={period}
+                max={3600}
                 style={{ margin: 8 }}
                 value={dwell}
                 onChange={onChangeDwelltime}
@@ -178,8 +177,7 @@ const App = () => {
                 onChange={onChangeThreshold}
               />
               dots            
-              <Button
-                loading={isSetting}
+              <Button                
                 disabled={adataRef.current === null}
                 onClick={onSet}
                 style={{margin: 8}}
@@ -193,7 +191,8 @@ const App = () => {
                 )}
               </Select>
             </Col>
-          </Row>          
+          </Row>
+          {console.log(adataRef.current, 'addata')}
           {adataRef.current ? 
             <FlowChart
               info={adataRef.current}
@@ -204,6 +203,7 @@ const App = () => {
               bgImage={bgImage}              
               duration={duration} // seconds for period
               timezone={timezone}
+              reload={isSetting}
             />
             : <Fragment>
                 <Row>              

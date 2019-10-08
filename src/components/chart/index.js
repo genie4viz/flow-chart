@@ -5,9 +5,6 @@ import * as d3 from "d3";
 import { getOpacity, getCurrentIndex, getNearDate } from "../../globals";
 import "./index.css";
 
-const formatDate = d3.timeFormat("%I:%M:%S %d %b");
-const parseDate = d3.timeParse("%m/%d/%y");
-
 export const FlowChart = ({
   info,
   width,
@@ -16,7 +13,8 @@ export const FlowChart = ({
   ycount,
   bgImage, 
   duration,
-  timezone 
+  timezone,
+  reload
 }) => {  
   console.log(info, 'to show')
   //-------------------------
@@ -27,7 +25,7 @@ export const FlowChart = ({
   const durationIntervalRef = useRef(null);
   const frameIntervalRef = useRef(null);
 
-  const [isStarted, setIsStarted] = useState(true);  
+  const [isStarted, setIsStarted] = useState(true);
   const [playSpeed, setPlaySpeed] = useState(1);
   
   const onStart = () => setIsStarted(!isStarted);  
@@ -80,7 +78,7 @@ export const FlowChart = ({
       .selectAll('text')
       .text(d => {
         const mome = momentTZ(d);
-        return mome.tz(timezone).format('MMM Do,h:mm:ss a');
+        return mome.tz(timezone).format('h:mm a');
       })
       .attr('dy', 12);
 
@@ -152,7 +150,7 @@ export const FlowChart = ({
       .attr("class", "label")
       .attr("text-anchor", "middle")
       .attr("font-size", 10)
-      .text(formatDate(startDate))
+      .text(momentTZ(startDate).tz(timezone).format('h:mm a'))
       .attr("transform", "translate(0,-40)");
     
     const step = () => {
@@ -163,7 +161,7 @@ export const FlowChart = ({
     const update = h => {        
       handle.attr("cx", x(h));
       indicator.attr("x", x(h) - 1);
-      label.attr("x", x(h)).text(momentTZ(h).tz(timezone).format('MMM Do YYYY, h:mm a'));
+      label.attr("x", x(h)).text(momentTZ(h).tz(timezone).format('h:mm:ss a'));//MMM Do YYYY, h:mm a
     }
 
     const drawHeatmap = (ctx, data) => {
@@ -215,7 +213,7 @@ export const FlowChart = ({
       for (let j = 0; j < dataPoints.length; j++) {
         for (let k = 0; k < dataPoints[j].shows.length; k++) {
           if(dataPoints[j].shows[k].is_squarable){
-            ctx.fillStyle = `rgba(0, ${dataPoints[j].shows[k].square_grad}, ${dataPoints[j].shows[k].square_grad})`;
+            ctx.fillStyle = `rgba(0, ${dataPoints[j].shows[k].square_grad}, ${dataPoints[j].shows[k].square_grad}, 0.5)`;
             ctx.fillRect(
               dataPoints[j].shows[k].from_x - 10,
               dataPoints[j].shows[k].from_y - 10,
@@ -293,7 +291,12 @@ export const FlowChart = ({
         }
       }, duration/playSpeed * 1000);
     };
-    
+    if(reload){
+      clearInterval(frameIntervalRef.current);
+      clearInterval(durationIntervalRef.current);
+      timesRef.current = 0;
+      current = x(0);
+    }
     if(isStarted){
       current = x(info.dateFrom + timesRef.current * info.periodMS);
       drawTrail(info.dt);
@@ -301,7 +304,7 @@ export const FlowChart = ({
       current = x(info.dateFrom + timesRef.current * info.periodMS);
       drawTrail(info.dt, true);
     }
-  }, [timezone, isStarted, playSpeed, duration, width, height, xcount, ycount, info.dt, info.dateFrom, info.dateTo, info.totalTimes, info.periodMS]);
+  }, [timezone, reload, isStarted, playSpeed, duration, width, height, xcount, ycount, info.dt, info.dateFrom, info.dateTo, info.totalTimes, info.periodMS]);
 
   return (
     <Fragment>
