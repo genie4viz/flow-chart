@@ -127,7 +127,8 @@ export const FlowChart = ({
             const date = x.invert(current);              
             const nearDate = getNearDate(date, info.dateFrom, info.dateTo, info.periodMS, info.totalTimes);              
             current = x(nearDate);
-            timesRef.current = getCurrentIndex(date, info.dateFrom, info.dateTo, info.periodMS, info.totalTimes);            
+            timesRef.current = getCurrentIndex(date, info.dateFrom, info.dateTo, info.periodMS, info.totalTimes);
+            setIsStarted(false);
             drawTrail(info.dt, true);
           })
       );
