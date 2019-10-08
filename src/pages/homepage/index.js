@@ -1,12 +1,14 @@
 import React, { useRef, useState, Fragment } from "react";
 import { CSVReader } from "react-papaparse";
+import momentTZ from 'moment-timezone';
 import {
   Layout,
   Button,  
   Row,
   Col,
   InputNumber,
-  Icon
+  Icon,
+  Select
 } from "antd";
 import { ClipLoader } from "react-spinners";
 
@@ -15,13 +17,15 @@ import { FlowChart } from "../../components/chart";
 import "./index.css";
 
 const { Header, Content, Footer } = Layout;
+const { Option } = Select;
 
 const xcount = 8,
   ycount = 6,
   duration = 4;
 
 const App = () => {
-  const fileInputRef = useRef();
+  const fileInputRef = useRef();  
+  const timeZonesList = momentTZ.tz.names();
 
   const [isLoading, setIsLoading] = useState(false);
   const [period, setPeriod] = useState(10);
@@ -30,6 +34,7 @@ const App = () => {
   const [threshold, setThreshold] = useState(1);
   const [bgImage, setBgImage] = useState(null);
   const [imgDimen, setImgDimen] = useState({width: 640, height: 480});  
+  const [timezone, setTimezone] = useState(momentTZ.tz.guess());
   
   const fdataRef = useRef(null);
   const adataRef = useRef(null);
@@ -84,6 +89,7 @@ const App = () => {
     fileInputRef.current.click();
   };
 
+  const onChangeTimezone = value => setTimezone(value);
   const onChangePeriod = value => setPeriod(value);
   const onChangeDwelltime = value => setDwell(value);
   const onChangeThreshold = value => setThreshold(value);  
@@ -179,7 +185,13 @@ const App = () => {
                 style={{margin: 8}}
               >
                 Set
-              </Button>              
+              </Button>
+              Timezone: 
+              <Select showSearch value={timezone} style={{ width: 200 }} onChange={onChangeTimezone}>
+                {timeZonesList.map((timezone, i) => 
+                  <Option key={i} value={timezone}>{timezone}</Option>
+                )}
+              </Select>
             </Col>
           </Row>          
           {adataRef.current ? 
@@ -191,6 +203,7 @@ const App = () => {
               ycount={ycount}
               bgImage={bgImage}              
               duration={duration} // seconds for period
+              timezone={timezone}
             />
             : <Fragment>
                 <Row>              

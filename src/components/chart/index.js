@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, Fragment, useState } from "react";
+import momentTZ from 'moment-timezone';
 import {Row, Col, Radio, Button, Icon} from "antd";
 import * as d3 from "d3";
 import { getOpacity, getCurrentIndex, getNearDate } from "../../globals";
@@ -14,7 +15,8 @@ export const FlowChart = ({
   xcount,
   ycount,
   bgImage, 
-  duration  
+  duration,
+  timezone 
 }) => {  
   console.log(info, 'to show')
   //-------------------------
@@ -32,6 +34,7 @@ export const FlowChart = ({
   const onChangePlaySpeed = e => {
     timesRef.current = 0;
     setPlaySpeed(e.target.value);
+    setIsStarted(!isStarted);
   }
   
   const initSettings = () => {
@@ -46,7 +49,7 @@ export const FlowChart = ({
       endDate = new Date(info.dateTo);
     
     const margin = { top: 0, right: 40, bottom: 0, left: 40 },
-      w = width - margin.left - margin.right,
+      w = width * 2 - margin.left - margin.right,
       h = 100 - margin.top - margin.bottom;
     const days = endDate.getDate() - startDate.getDate();
 
@@ -54,7 +57,7 @@ export const FlowChart = ({
     
     const ctx = canvasRef.current.getContext("2d");
     ctx.fillStyle = `rgba(255, 255, 255, 1)`;
-    ctx.fillRect(0, 0, width, height);    
+    ctx.fillRect(0, 0, width, height);
       
     const svg = d3.select(svgRef.current);
     svg.selectAll("*").remove();
@@ -75,6 +78,10 @@ export const FlowChart = ({
     
     ruler
       .selectAll('text')
+      .text(d => {
+        const mome = momentTZ(d);
+        return mome.tz(timezone).format('MMM Do,h:mm:ss a');
+      })
       .attr('dy', 12);
 
     const slider = svg
@@ -145,7 +152,7 @@ export const FlowChart = ({
       .attr("text-anchor", "middle")
       .attr("font-size", 10)
       .text(formatDate(startDate))
-      .attr("transform", "translate(0," + 20 + ")");
+      .attr("transform", "translate(0,-40)");
     
     const step = () => {
       update(x.invert(current));
@@ -155,14 +162,14 @@ export const FlowChart = ({
     const update = h => {        
       handle.attr("cx", x(h));
       indicator.attr("x", x(h) - 1);
-      label.attr("x", x(h)).text(formatDate(h));
+      label.attr("x", x(h)).text(momentTZ(h).tz(timezone).format('MMM Do YYYY, h:mm a'));
     }
 
     const drawHeatmap = (ctx, data) => {
       
         for(let i = 0; i < xcount; i++){
           for(let j = 0; j < ycount; j++){
-            ctx.fillStyle = `rgba(255, 255, 255, 0.05)`;
+            ctx.fillStyle = `rgba(255, 255, 255, 0.01)`;
             ctx.fillRect(
               i * xStep + 1,
               j * yStep + 1,
@@ -225,10 +232,10 @@ export const FlowChart = ({
           dataPoints[j].shows[k].cur_x += dataPoints[j].shows[k].step_x;
           dataPoints[j].shows[k].cur_y += dataPoints[j].shows[k].step_y;
           ctx.fillRect(
-            dataPoints[j].shows[k].cur_x - 1.2,
-            dataPoints[j].shows[k].cur_y - 1.2,
-            2.4,
-            2.4
+            dataPoints[j].shows[k].cur_x - 2,
+            dataPoints[j].shows[k].cur_y - 2,
+            4,
+            4
           );
         }
       }
@@ -293,7 +300,7 @@ export const FlowChart = ({
       current = x(info.dateFrom + timesRef.current * info.periodMS);
       drawTrail(info.dt, true);
     }
-  }, [isStarted, playSpeed, duration, width, height, xcount, ycount, info.dt, info.dateFrom, info.dateTo, info.totalTimes, info.periodMS]);
+  }, [timezone, isStarted, playSpeed, duration, width, height, xcount, ycount, info.dt, info.dateFrom, info.dateTo, info.totalTimes, info.periodMS]);
 
   return (
     <Fragment>
@@ -340,7 +347,7 @@ export const FlowChart = ({
         </Col>
       </Row>
       <Row style={{display: 'flex', justifyContent:'center', alignItems: 'center'}}>
-        <svg width={width} height={100} ref={svgRef} />
+        <svg width={width * 2} height={100} ref={svgRef} />
       </Row>
     </Fragment>
   );
