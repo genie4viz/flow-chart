@@ -28,8 +28,8 @@ const App = () => {
   const timeZonesList = momentTZ.tz.names();
 
   const [isLoading, setIsLoading] = useState(false);
-  const [period, setPeriod] = useState(1);
-  const [dwell, setDwell] = useState(10);
+  const [period, setPeriod] = useState(30);
+  const [dwell, setDwell] = useState(120);
   const [isSetting, setIsSetting] = useState(false);
   const [threshold, setThreshold] = useState(1);
   const [bgImage, setBgImage] = useState(null);

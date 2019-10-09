@@ -60,9 +60,10 @@ export function adjustData(data, period, dwell, threshold, xcount, ycount, w, h,
     d.is_squarable = false;
     d.square_grad = 0;
   });
+  
   id_nested_data.forEach(dd => {
     const diff =  dd.values[dd.values.length - 1].ts - dd.values[0].ts;
-    if(diff >= dwell * 1000){      
+    if(diff >= dwell * 1000){
       data.forEach(d => {
         if(d.device + ":" + d.id === dd.key){
           d.is_squarable = true;
@@ -70,7 +71,7 @@ export function adjustData(data, period, dwell, threshold, xcount, ycount, w, h,
         }
       });
     }
-  });  
+  });    
   
   for (let i = 0; i < times; i++) {
     currentFrom = baseFrom + i * periodMS;
@@ -80,6 +81,7 @@ export function adjustData(data, period, dwell, threshold, xcount, ycount, w, h,
       getCellData(partial, threshold, w, h, xcount, ycount)
     );
   }
+  
   cbFunc({
     dt: partials,
     dateFrom: baseFrom,    
@@ -94,6 +96,8 @@ function getCellData(data, threshold, w, h, xcount, ycount) {
     stepX = w / xcount,
     stepY = h / ycount,
     rect;
+  
+  let uniques = [];
   for (let i = 0; i < xcount; i++) {
     for (let j = 0; j < ycount; j++) {
       rect = {
@@ -109,7 +113,7 @@ function getCellData(data, threshold, w, h, xcount, ycount) {
         .key(d => d.device + ":" + d.id)
         .entries(subs);
       
-      if (nested.length >= threshold) {        
+      if (nested.length >= threshold) {
         let shows = [];
         nested.forEach(n => {          
           let show_record = {
@@ -123,10 +127,16 @@ function getCellData(data, threshold, w, h, xcount, ycount) {
             step_x: 0,
             step_y: 0,
             is_squarable: n.values[0].is_squarable,
-            square_grad: n.values[0].square_grad
-          }
-          shows.push(show_record);
+            square_grad: n.values[0].square_grad,
+            // last_time: n.values[n.values.length - 1].ts
+          };
+            
+          if(!uniques.includes(n.key)){//do not add same ID in one moment
+            uniques.push(n.key);
+            shows.push(show_record);
+          }          
         });
+        
         cellInfo.push({
           xi: i,
           yi: j,          
@@ -135,7 +145,8 @@ function getCellData(data, threshold, w, h, xcount, ycount) {
         });
       }
     }
-  }
+  }  
+  
   return cellInfo;
 }
 
@@ -157,7 +168,7 @@ export function getCurrentIndex(currentTime, dateFrom, dateTo, period, times) {
   for(let i = 0; i < times; i++){
     let currentFrom = dateFrom + i * period;
     let currentTo = currentFrom + period;
-    if(currentTime >= currentFrom && currentTime <= currentTo){
+    if(currentTime >= currentFrom && currentTime < currentTo){
       return i;
     }
   }

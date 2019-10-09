@@ -210,9 +210,11 @@ export const FlowChart = ({
     };
 
     const drawDwellSquares = dataPoints => {
+      let p = 0;
       for (let j = 0; j < dataPoints.length; j++) {
         for (let k = 0; k < dataPoints[j].shows.length; k++) {
           if(dataPoints[j].shows[k].is_squarable){
+            p++;
             ctx.fillStyle = `rgba(0, ${dataPoints[j].shows[k].square_grad}, ${dataPoints[j].shows[k].square_grad}, 0.5)`;
             ctx.fillRect(
               dataPoints[j].shows[k].from_x - 10,
@@ -223,6 +225,7 @@ export const FlowChart = ({
           }
         }
       }
+      // console.log(p, ': rect counts')
     }
     const updatePosition = dataPoints => {
       ctx.fillStyle = "#0000ff";
@@ -244,7 +247,7 @@ export const FlowChart = ({
       updatePosition(dataFrame);
       drawDwellSquares(dataFrame);
     };
-    const updateTrailPerDuration = (ctx, dataDuration, isPause) => {
+    const updateTrailPerDuration = (ctx, dataDuration, isPause) => {      
       let new_data = JSON.parse(JSON.stringify(dataDuration));
       for (let j = 0; j < new_data.length; j++) {
         for (let k = 0; k < new_data[j].shows.length; k++) {            
